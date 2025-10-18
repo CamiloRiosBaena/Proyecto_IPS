@@ -81,12 +81,13 @@
     <Compile Include="BaseDALRepository.cs" />
     <Compile Include="CiudadRepository.cs" />
     <Compile Include="ConexionOracle.cs" />
+    <Compile Include="DoctorRepository.cs" />
     <Compile Include="EPSRepository.cs" />
-    <Compile Include="EspecialidadesRepository.cs" />
     <Compile Include="EspecialidadRepository.cs" />
-    <Compile Include="ICrudCredencialesRepository.cs" />
     <Compile Include="CredencialesRepository.cs" />
+    <Compile Include="PacienteRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResponsableRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

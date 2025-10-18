@@ -12,15 +12,15 @@ namespace DAL
     {
         protected override string NombreTabla
         {
-            get { return "Ciudades"; }
+            get { return "s_ciudades"; }
         }
 
-        protected override string CampoId
+        protected override string Id
         {
             get { return "ciudad_id"; }
         }
 
-        protected override string CampoNombre
+        protected override string Primer_Nombre
         {
             get { return "nombre"; }
         }
@@ -45,7 +45,7 @@ namespace DAL
 
         protected override string ObtenerQueryInsert()
         {
-            return @"INSERT INTO Ciudades (ciudad_id, nombre, departamento, pais) 
+            return $@"INSERT INTO {NombreTabla} (ciudad_id, nombre, departamento, pais) 
                      VALUES (:id, :nombre, :departamento, :pais)";
         }
 
@@ -59,7 +59,7 @@ namespace DAL
 
         protected override string ObtenerQueryUpdate()
         {
-            return @"UPDATE Ciudades 
+            return $@"UPDATE {NombreTabla} 
                      SET nombre = :nombre, departamento = :departamento, pais = :pais 
                      WHERE ciudad_id = :id";
         }

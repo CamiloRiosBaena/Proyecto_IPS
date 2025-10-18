@@ -12,15 +12,15 @@ namespace DAL
     {
         protected override string NombreTabla
         {
-            get { return "EPS"; }
+            get { return "s_EPS"; }
         }
 
-        protected override string CampoId
+        protected override string Id
         {
             get { return "eps_id"; }
         }
 
-        protected override string CampoNombre
+        protected override string Primer_Nombre
         {
             get { return "nombre"; }
         }
@@ -48,7 +48,7 @@ namespace DAL
 
         protected override string ObtenerQueryInsert()
         {
-            return @"INSERT INTO EPS (eps_id, nombre, nit, telefono, correo, direccion, tipo_regimen) 
+            return $@"INSERT INTO {NombreTabla} (eps_id, nombre, nit, telefono, correo, direccion, tipo_regimen) 
                      VALUES (:id, :nombre, :nit, :tel, :correo, :dir, :regimen)";
         }
 
@@ -65,7 +65,7 @@ namespace DAL
 
         protected override string ObtenerQueryUpdate()
         {
-            return @"UPDATE EPS 
+            return $@"UPDATE {NombreTabla}
                      SET nombre = :nombre, nit = :nit, telefono = :tel, 
                          correo = :correo, direccion = :dir, tipo_regimen = :regimen 
                      WHERE eps_id = :id";

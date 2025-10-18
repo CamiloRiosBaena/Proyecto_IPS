@@ -78,9 +78,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Admin.cs" />
     <Compile Include="Ciudad.cs" />
     <Compile Include="EPS.cs" />
     <Compile Include="Especialidad.cs" />
+    <Compile Include="HistorialCita.cs" />
     <Compile Include="Responsable.cs" />
     <Compile Include="Cita.cs" />
     <Compile Include="Doctor.cs" />

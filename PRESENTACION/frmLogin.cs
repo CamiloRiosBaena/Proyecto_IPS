@@ -6,11 +6,11 @@ namespace PRESENTACION
 {
     public partial class frmLogin : Form
     {
-        private ServicioUsuario servicioUsuario;
+        private ServicioCredenciales servicioCredenciales;
         public frmLogin()
         {
             InitializeComponent();
-            servicioUsuario = new ServicioUsuario();
+            servicioCredenciales = new ServicioCredenciales();
         }
 
         private void btnLogin_Click(object sender, EventArgs e)
@@ -20,16 +20,13 @@ namespace PRESENTACION
 
             try
             {
-                bool loginExitoso = servicioUsuario.Login(username, password);
+                string tipoUsuario;
+                bool loginExitoso = servicioCredenciales.IniciarSesion(username, password, out tipoUsuario);
 
                 if (loginExitoso)
                 {
-                    string rol = servicioUsuario.ObtenerRolUsuario(username);
-
-                    MessageBox.Show($"Login exitoso\nRol: {rol}", "Éxito",
+                    MessageBox.Show($"Login exitoso\nRol: {tipoUsuario}", "Éxito",
                                   MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    //AbrirFormularioPrincipal(username, rol);
                 }
                 else
                 {

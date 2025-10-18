@@ -12,15 +12,15 @@ namespace DAL
     {
         protected override string NombreTabla
         {
-            get { return "Especialidades"; }
+            get { return "s_especialidades"; }
         }
 
-        protected override string CampoId
+        protected override string Id
         {
             get { return "especialidad_id"; }
         }
 
-        protected override string CampoNombre
+        protected override string Primer_Nombre
         {
             get { return "nombre"; }
         }
@@ -41,7 +41,7 @@ namespace DAL
 
         protected override string ObtenerQueryInsert()
         {
-            return @"INSERT INTO Especialidades (especialidad_id, nombre) 
+            return $@"INSERT INTO {NombreTabla} (especialidad_id, nombre) 
                      VALUES (:id, :nombre)";
         }
 
@@ -53,7 +53,7 @@ namespace DAL
 
         protected override string ObtenerQueryUpdate()
         {
-            return @"UPDATE Especialidades 
+            return $@"UPDATE {NombreTabla} 
                      SET nombre = :nombre 
                      WHERE especialidad_id = :id";
         }

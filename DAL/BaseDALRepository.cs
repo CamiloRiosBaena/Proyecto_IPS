@@ -11,8 +11,8 @@ namespace DAL
     public abstract class BaseDALRepository<T>
     {
         protected abstract string NombreTabla { get; }
-        protected abstract string CampoId { get; }
-        protected abstract string CampoNombre { get; }
+        protected abstract string Id { get; }
+        protected abstract string Primer_Nombre { get; }
 
         protected abstract string ObtenerTextoMostrar(OracleDataReader reader);
         protected abstract T MapearDesdeReader(OracleDataReader reader);
@@ -34,7 +34,7 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} ORDER BY {CampoNombre}";
+                    string query = $"SELECT * FROM {NombreTabla} ORDER BY {Primer_Nombre}";
 
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
@@ -42,7 +42,7 @@ namespace DAL
                         {
                             while (reader.Read())
                             {
-                                string id = reader[CampoId].ToString();
+                                string id = reader[Id].ToString();
                                 string texto = ObtenerTextoMostrar(reader);
                                 dt.Rows.Add(id, texto);
                             }
@@ -65,7 +65,7 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} ORDER BY {CampoNombre}";
+                    string query = $"SELECT * FROM {NombreTabla} ORDER BY {Primer_Nombre}";
 
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
@@ -95,7 +95,7 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} WHERE {CampoId} = :id";
+                    string query = $"SELECT * FROM {NombreTabla} WHERE {Id} = :id";
 
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
@@ -167,7 +167,7 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"DELETE FROM {NombreTabla} WHERE {CampoId} = :id";
+                    string query = $"DELETE FROM {NombreTabla} WHERE {Id} = :id";
 
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
@@ -188,7 +188,7 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT COUNT(*) FROM {NombreTabla} WHERE {CampoId} = :id";
+                    string query = $"SELECT COUNT(*) FROM {NombreTabla} WHERE {Id} = :id";
 
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {

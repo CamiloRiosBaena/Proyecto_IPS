@@ -14,7 +14,8 @@ namespace PRESENTACION
 {
     public partial class frmRegistro : Form
     {
-        private ServicioUsuario servicioUsuario;
+        private ServicioCredenciales servicioCredenciales;
+        private ServicioResponsable servicioResponsable;
         private ServicioCiudad servicioCiudad;
         private ServicioEPS servicioEPS;
         private ServicioEspecialidad servicioEspecialidad;
@@ -22,7 +23,8 @@ namespace PRESENTACION
         {
             InitializeComponent();
 
-            servicioUsuario = new ServicioUsuario();
+            servicioCredenciales = new ServicioCredenciales();
+            servicioResponsable = new ServicioResponsable();
             servicioCiudad = new ServicioCiudad();
             servicioEPS = new ServicioEPS();
             servicioEspecialidad = new ServicioEspecialidad();
@@ -148,7 +150,7 @@ namespace PRESENTACION
                         responsable.Parentesco = txtParentesco.Text;
                         responsable.Telefono = txtTelefonoResponsable.Text;
                         responsable.Correo = txtCorreoResponsable.Text;
-                        responsable.Direccion = txtCorreoResponsable.Text;
+                        responsable.Direccion = txtDireccionResponsable.Text;
                         responsable.Barrio = txtBarrioResponsable.Text;
                         responsable.Calle = txtCalleResponsable.Text;
                         responsable.Ciudad_id = Convert.ToInt32(cmbCiudadResponsable.SelectedValue);
@@ -170,8 +172,8 @@ namespace PRESENTACION
                         paciente.RH = char.Parse(cmbRH.SelectedItem.ToString());
                         paciente.Documento_responsable = responsable.DocumentoID;
 
-                        bool responsableExitoso = servicioUsuario.RegistrarResponsable(responsable);
-                        bool pacienteExitoso = servicioUsuario.RegistrarPaciente(paciente, username, password);
+                        bool responsableExitoso = servicioResponsable.Insertar(responsable);
+                        bool pacienteExitoso = servicioCredenciales.RegistrarPaciente(paciente, username, password);
 
                         registroExitoso = responsableExitoso && pacienteExitoso;
                         break;
@@ -189,7 +191,7 @@ namespace PRESENTACION
 
                         Console.WriteLine(doctor.Estado);
 
-                        registroExitoso = servicioUsuario.RegistrarDoctor(doctor, username, password);
+                        registroExitoso = servicioCredenciales.RegistrarDoctor(doctor, username, password);
                         break;
                     default:
                         MessageBox.Show("Rol no válido", "Error",
