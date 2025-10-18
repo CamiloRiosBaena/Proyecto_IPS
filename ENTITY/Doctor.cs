@@ -11,13 +11,17 @@ namespace ENTITY
         public Doctor() { }
 
         public string DocumentoID { get; set; }
-        public string Nombre { get; set; }
-        public string Especialidad { get; set; }
+        public string NumeroLicencia { get; set; }
+        public string Primer_Nombre { get; set; }
+        public string Segundo_Nombre { get; set; }
+        public string Primer_Apellido { get; set; }
+        public string Segundo_Apellido { get; set; }
+        public int Especialidad_id { get; set; }
         public string Telefono { get; set; }
         public string Correo { get; set; }
         public string Estado { get; set; }
-        public List<DateTime> HorariosAtencion { get; set; } = new List<DateTime>();
-        public int Id_usuario { get; set; }
+        public string HoraAtencion { get; set; }
+        public int Usuario_id { get; set; }
         
     }
 }

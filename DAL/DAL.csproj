@@ -78,8 +78,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ICrudUsuarioRepository.cs" />
-    <Compile Include="UsuarioRepository.cs" />
+    <Compile Include="BaseDALRepository.cs" />
+    <Compile Include="CiudadRepository.cs" />
+    <Compile Include="ConexionOracle.cs" />
+    <Compile Include="EPSRepository.cs" />
+    <Compile Include="EspecialidadesRepository.cs" />
+    <Compile Include="EspecialidadRepository.cs" />
+    <Compile Include="ICrudCredencialesRepository.cs" />
+    <Compile Include="CredencialesRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

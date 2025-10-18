@@ -11,15 +11,22 @@ namespace ENTITY
         public Paciente() { }
 
         public string DocumentoID { get; set; }
-        public string Nombre { get; set; }
+        public string Primer_Nombre { get; set; }
+        public string Segundo_Nombre { get; set; }
+        public string Primer_Apellido { get; set; }
+        public string Segundo_Apellido { get; set; }
         public char Sexo { get; set; }
         public int Edad { get; set; }
         public string Correo { get; set; }
+        public string Direccion { get; set; }
+        public string Barrio { get; set; }
+        public string Calle {  get; set; }
+        public int Ciudad_id { get; set; }
         public string Telefono { get; set; }
-        public string Direccion {  get; set; }
-        public string EPS { get; set; }
+        public int EPS_id { get; set; }
         public string Tipo_sangre { get; set; }
-        public string Id_responsable { get; set; }
-        public int Id_usuario { get; set; }
+        public char RH { get; set; }
+        public string Documento_responsable { get; set; }
+        public int Usuario_id { get; set; }
     }
 }

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class UsuarioRepository : ICrudUsuarioRepository
+    public class CredencialesRepository : ICrudCredencialesRepository
     {
         private static string connectionString = "User Id=usuario_ips;Password=usuario_ips123;Data Source=localhost:1521/XEPDB1";
 
@@ -23,7 +23,7 @@ namespace DAL
                     connection.Open();
 
                     string query = @"SELECT COUNT(*) 
-                                   FROM s_usuarios 
+                                   FROM s_credenciales 
                                    WHERE nombre_usuario = :username 
                                    AND password = :password";
 
@@ -39,7 +39,7 @@ namespace DAL
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error DAL al verificar credenciales: {ex.Message}", ex);
+                throw new Exception($"Error al verificar credenciales: {ex.Message}");
             }
         }
 
@@ -121,7 +121,7 @@ namespace DAL
         private void InsertarUsuario(OracleConnection connection, OracleTransaction transaction,
                                int usuarioId, string username, string password, string rol)
         {
-            string query = @"INSERT INTO s_usuarios (id_usuario, nombre_usuario, password, rol) 
+            string query = @"INSERT INTO s_credenciales (usuario_id, nombre_usuario, password, tipo_usuario) 
                         VALUES (:id, :username, :password, :rol)";
 
             using (var cmd = new OracleCommand(query, connection))
@@ -130,7 +130,7 @@ namespace DAL
                 cmd.Parameters.Add("id", OracleDbType.Int32).Value = usuarioId;
                 cmd.Parameters.Add("username", OracleDbType.Varchar2).Value = username;
                 cmd.Parameters.Add("password", OracleDbType.Varchar2).Value = HashPassword(password);
-                cmd.Parameters.Add("rol", OracleDbType.Varchar2).Value = rol;
+                cmd.Parameters.Add("tipo_usuario", OracleDbType.Varchar2).Value = rol;
                 cmd.ExecuteNonQuery();
             }
         }
@@ -138,24 +138,32 @@ namespace DAL
         private void InsertarPaciente(OracleConnection connection, OracleTransaction transaction,
                    int usuarioId, Paciente paciente)
         {
-            string query = @"INSERT INTO s_pacientes (documento, nombre,
-                     sexo, edad, correo, telefono, direccion, eps, tipo_sangre, documento_responsable, usuario_id) 
-                     VALUES (:documento, :nombre, 
-                     :sexo, :edad, :correo, :telefono, :direccion, :eps, :tipo_sangre, :documento_responsable, :usuario_id)";
+            string query = @"INSERT INTO s_pacientes (documentoid, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido,
+                     sexo, edad, correo, direccion, barrio, calle, ciudad_id, telefono, eps_id, tipo_sangre, rh, documento_responsable, usuario_id) 
+                     VALUES (:documentoid, :primer_nombre, :segundo_nombre,:primer_apellido, :segundo_apellido, 
+                     :sexo, :edad, :correo, :direccion, :barrio, :calle, :ciudad_id, :telefono, :eps_id, :tipo_sangre, :rh, 
+                     :documento_responsable, :usuario_id)";
 
             using (var cmd = new OracleCommand(query, connection))
             {
                 cmd.Transaction = transaction;
-                cmd.Parameters.Add("documento", OracleDbType.Varchar2).Value = paciente.DocumentoID;
-                cmd.Parameters.Add("nombre", OracleDbType.Varchar2).Value = paciente.Nombre;
+                cmd.Parameters.Add("documentoid", OracleDbType.Varchar2).Value = paciente.DocumentoID;
+                cmd.Parameters.Add("primer_nombre", OracleDbType.Varchar2).Value = paciente.Primer_Nombre;
+                cmd.Parameters.Add("segundo_nombre", OracleDbType.Varchar2).Value = (object)paciente.Segundo_Nombre ?? DBNull.Value;
+                cmd.Parameters.Add("primer_apellido", OracleDbType.Varchar2).Value = paciente.Primer_Apellido;
+                cmd.Parameters.Add("segundo_apellido", OracleDbType.Varchar2).Value = (object)paciente.Segundo_Apellido ?? DBNull.Value;
                 cmd.Parameters.Add("sexo", OracleDbType.Char).Value = paciente.Sexo;
                 cmd.Parameters.Add("edad", OracleDbType.Int32).Value = paciente.Edad;
                 cmd.Parameters.Add("correo", OracleDbType.Varchar2).Value = paciente.Correo;
-                cmd.Parameters.Add("telefono", OracleDbType.Varchar2).Value = paciente.Telefono;
                 cmd.Parameters.Add("direccion", OracleDbType.Varchar2).Value = paciente.Direccion;
-                cmd.Parameters.Add("eps", OracleDbType.Varchar2).Value = paciente.EPS;
+                cmd.Parameters.Add("barrio", OracleDbType.Varchar2).Value = paciente.Barrio;
+                cmd.Parameters.Add("calle", OracleDbType.Varchar2).Value = paciente.Calle;
+                cmd.Parameters.Add("ciudad_id", OracleDbType.Int32).Value = paciente.Ciudad_id;
+                cmd.Parameters.Add("telefono", OracleDbType.Varchar2).Value = paciente.Telefono;
+                cmd.Parameters.Add("eps_id", OracleDbType.Varchar2).Value = paciente.EPS_id;
                 cmd.Parameters.Add("tipo_sangre", OracleDbType.Varchar2).Value = paciente.Tipo_sangre;
-                cmd.Parameters.Add("documento_responsable", OracleDbType.Varchar2).Value = paciente.Id_responsable;
+                cmd.Parameters.Add("rh", OracleDbType.Char).Value=paciente.RH;
+                cmd.Parameters.Add("documento_responsable", OracleDbType.Varchar2).Value = paciente.Documento_responsable;
                 cmd.Parameters.Add("usuario_id", OracleDbType.Int32).Value = usuarioId;
 
                 cmd.ExecuteNonQuery();
@@ -166,22 +174,26 @@ namespace DAL
                               int usuarioId, Doctor doctor)
         {
             string query = @"INSERT INTO admin_ips.doctores 
-                             (documento, nombre, especialidad, telefono, correo, estado, hora_atencion, usuario_id) 
-                             VALUES (:documento, :nombre, :especialidad, :telefono, :correo, :estado, :hora_atencion, :usuario_id)";
-
-            string horariosString = string.Join(",", doctor.HorariosAtencion.Select(h => h.ToString("yyyy-MM-dd HH:mm")));
+                             (documentoid, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, 
+                             especialidad_id, telefono, correo, horaatencion, usuario_id, numero_licencia) 
+                             VALUES (:documentoid, :primer_nombre, :segundo_nombre,:primer_apellido, :segundo_apellido, 
+                             :especialidad_id, :telefono, :correo, :horaatencion, :usuario_id, :numero_licencia)";
 
             using (var cmd = new OracleCommand(query, connection))
             {
                 cmd.Transaction = transaction;
-                cmd.Parameters.Add("documento", OracleDbType.Varchar2).Value = doctor.DocumentoID;
-                cmd.Parameters.Add("nombre", OracleDbType.Varchar2).Value = doctor.Nombre;
-                cmd.Parameters.Add("especialidad", OracleDbType.Varchar2).Value = doctor.Especialidad;
+                cmd.Parameters.Add("documentoid", OracleDbType.Varchar2).Value = doctor.DocumentoID;
+                cmd.Parameters.Add("primer_nombre", OracleDbType.Varchar2).Value = doctor.Primer_Nombre;
+                cmd.Parameters.Add("segundo_nombre", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Nombre ?? DBNull.Value;
+                cmd.Parameters.Add("primer_apellido", OracleDbType.Varchar2).Value = doctor.Primer_Apellido;
+                cmd.Parameters.Add("segundo_apellido", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Apellido ?? DBNull.Value;
+                cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = doctor.Especialidad_id;
                 cmd.Parameters.Add("telefono", OracleDbType.Varchar2).Value = doctor.Telefono;
                 cmd.Parameters.Add("correo", OracleDbType.Varchar2).Value = doctor.Correo;
-                cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = doctor.Estado;
-                cmd.Parameters.Add("hora_atencion", OracleDbType.Varchar2).Value = horariosString;
+                //cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = doctor.Estado;
+                cmd.Parameters.Add("horaatencion", OracleDbType.Varchar2).Value = (object)doctor.HoraAtencion ?? DBNull.Value;
                 cmd.Parameters.Add("usuario_id", OracleDbType.Int32).Value = usuarioId;
+                cmd.Parameters.Add("numero_licencia", OracleDbType.Varchar2).Value = doctor.NumeroLicencia;
 
                 cmd.ExecuteNonQuery();
             }
@@ -189,20 +201,27 @@ namespace DAL
 
         private void InsertarResponsable(OracleConnection connection, OracleTransaction transaction, Responsable responsable)
         {
-            string query = @"INSERT INTO s_responsables (documento, nombre,
-                             parentesco, telefono, correo, direccion, ocupacion) 
-                             VALUES (:documento, :nombre, 
-                             :parentesco, :telefono, :correo, :direccion, :ocupacion)";
+            string query = @"INSERT INTO s_responsables (documentoid, primer_nombre, segundo_nombre, 
+                            primer_apellido, segundo_apellido, parentesco, telefono, correo, direccion, 
+                            barrio, calle, ciudad_id, ocupacion) VALUES (:documentoid, :primer_nombre, :segundo_nombre, 
+                            :primer_apellido, :segundo_apellido, :parentesco, :telefono, :correo, :direccion, :barrio, 
+                            :calle, :ciudad_id, :ocupacion)";
 
             using (var cmd = new OracleCommand(query, connection))
             {
                 cmd.Transaction = transaction;
-                cmd.Parameters.Add("documento", OracleDbType.Varchar2).Value = responsable.DocumentoID;
-                cmd.Parameters.Add("nombre", OracleDbType.Varchar2).Value = responsable.Nombre;
+                cmd.Parameters.Add("documentoid", OracleDbType.Varchar2).Value = responsable.DocumentoID;
+                cmd.Parameters.Add("primer_nombre", OracleDbType.Varchar2).Value = responsable.Primer_Nombre;
+                cmd.Parameters.Add("segundo_nombre", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Nombre ?? DBNull.Value;
+                cmd.Parameters.Add("primer_apellido", OracleDbType.Varchar2).Value = responsable.Primer_Apellido;
+                cmd.Parameters.Add("segundo_apellido", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Apellido ?? DBNull.Value;
                 cmd.Parameters.Add("parentesco", OracleDbType.Varchar2).Value = responsable.Parentesco;
                 cmd.Parameters.Add("telefono", OracleDbType.Varchar2).Value = responsable.Telefono;
-                cmd.Parameters.Add("parentesco", OracleDbType.Varchar2).Value = responsable.Parentesco;
+                cmd.Parameters.Add("correo", OracleDbType.Varchar2).Value = responsable.Correo;
                 cmd.Parameters.Add("direccion", OracleDbType.Varchar2).Value = responsable.Direccion;
+                cmd.Parameters.Add("barrio", OracleDbType.Varchar2).Value = responsable.Barrio;
+                cmd.Parameters.Add("calle", OracleDbType.Varchar2).Value = responsable.Calle;
+                cmd.Parameters.Add("ciudad_id", OracleDbType.Int32).Value = responsable.Ciudad_id;
                 cmd.Parameters.Add("ocupacion", OracleDbType.Varchar2).Value = responsable.Ocupacion;
                 cmd.ExecuteNonQuery();
             }
@@ -216,7 +235,7 @@ namespace DAL
                 {
                     connection.Open();
 
-                    string query = "SELECT COUNT(*) FROM s_usuarios WHERE nombre_usuario = :username";
+                    string query = "SELECT COUNT(*) FROM s_credenciales WHERE nombre_usuario = :username";
 
                     using (var command = new OracleCommand(query, connection))
                     {
@@ -240,7 +259,7 @@ namespace DAL
                 {
                     connection.Open();
 
-                    string query = "SELECT COALESCE(MAX(id_usuario), 0) + 1 FROM s_usuarios";
+                    string query = "SELECT COALESCE(MAX(usuario_id), 0) + 1 FROM s_credenciales";
 
                     using (var command = new OracleCommand(query, connection))
                     {
@@ -262,7 +281,7 @@ namespace DAL
                 {
                     connection.Open();
 
-                    string query = "SELECT rol FROM s_usuarios WHERE nombre_usuario = :username";
+                    string query = "SELECT rol FROM s_credenciales WHERE nombre_usuario = :username";
 
                     using (var command = new OracleCommand(query, connection))
                     {

@@ -4,10 +4,10 @@ using System.Windows.Forms;
 
 namespace PRESENTACION
 {
-    public partial class Login : Form
+    public partial class frmLogin : Form
     {
         private ServicioUsuario servicioUsuario;
-        public Login()
+        public frmLogin()
         {
             InitializeComponent();
             servicioUsuario = new ServicioUsuario();
@@ -47,7 +47,7 @@ namespace PRESENTACION
         private void btnRegistro_Click(object sender, EventArgs e)
         {
             this.Hide();
-            Registro formularioRegistro = new Registro();
+            frmRegistro formularioRegistro = new frmRegistro();
             formularioRegistro.Show();
         }
 

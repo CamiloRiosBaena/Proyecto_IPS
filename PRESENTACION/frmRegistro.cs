@@ -12,14 +12,22 @@ using System.Windows.Forms;
 
 namespace PRESENTACION
 {
-    public partial class Registro : Form
+    public partial class frmRegistro : Form
     {
         private ServicioUsuario servicioUsuario;
-        public Registro()
+        private ServicioCiudad servicioCiudad;
+        private ServicioEPS servicioEPS;
+        private ServicioEspecialidad servicioEspecialidad;
+        public frmRegistro()
         {
             InitializeComponent();
+
             servicioUsuario = new ServicioUsuario();
+            servicioCiudad = new ServicioCiudad();
+            servicioEPS = new ServicioEPS();
+            servicioEspecialidad = new ServicioEspecialidad();
             ConfigurarComboBox();
+            CargarComboBoxes();
             OcultarPaneles();
         }
 
@@ -29,6 +37,44 @@ namespace PRESENTACION
             cmbSexo.SelectedIndex = 0;
             cmbTipoDeSangre.SelectedIndex = 0;
             cmbEPS.SelectedIndex = 0;
+        }
+        private void CargarComboBoxes()
+        {
+            try
+            {
+                DataTable ciudadesPacientes = servicioCiudad.ObtenerParaCombo();
+
+                cmbCiudadPaciente.DataSource = ciudadesPacientes;
+                cmbCiudadPaciente.DisplayMember = "Texto";
+                cmbCiudadPaciente.ValueMember = "Id";
+                cmbCiudadPaciente.SelectedIndex = -1;
+
+                DataTable ciudadesResponsables = servicioCiudad.ObtenerParaCombo();
+
+                cmbCiudadResponsable.DataSource = ciudadesResponsables;
+                cmbCiudadResponsable.DisplayMember = "Texto";
+                cmbCiudadResponsable.ValueMember = "Id";
+                cmbCiudadResponsable.SelectedIndex = -1;
+
+                DataTable EPS = servicioEPS.ObtenerParaCombo();
+
+                cmbEPS.DataSource = EPS;
+                cmbEPS.DisplayMember = "Texto";
+                cmbEPS.ValueMember = "Id";
+                cmbEPS.SelectedIndex = -1;
+
+                DataTable Especialidades = servicioEspecialidad.ObtenerParaCombo();
+
+                cmbEspecialidad.DataSource = Especialidades;
+                cmbEspecialidad.DisplayMember = "Texto";
+                cmbEspecialidad.ValueMember = "Id";
+                cmbEspecialidad.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar datos: " + ex.Message,
+                               "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
         private void OcultarPaneles()
         {
@@ -97,23 +143,32 @@ namespace PRESENTACION
                     case "Paciente":
 
                         responsable.DocumentoID = txtCedulaResponsable.Text;
-                        responsable.Nombre = txtNombreResponsable.Text.Trim() + " " + txtApellidoResponsable.Text.Trim();
+                        responsable.Primer_Nombre = txtNombreResponsable.Text;
+                        responsable.Primer_Apellido = txtApellidoResponsable.Text;
                         responsable.Parentesco = txtParentesco.Text;
                         responsable.Telefono = txtTelefonoResponsable.Text;
                         responsable.Correo = txtCorreoResponsable.Text;
                         responsable.Direccion = txtCorreoResponsable.Text;
+                        responsable.Barrio = txtBarrioResponsable.Text;
+                        responsable.Calle = txtCalleResponsable.Text;
+                        responsable.Ciudad_id = Convert.ToInt32(cmbCiudadResponsable.SelectedValue);
                         responsable.Ocupacion = txtOcupacionResponsable.Text;
 
                         paciente.DocumentoID = txtCedulaPaciente.Text;
-                        paciente.Nombre = txtNombrePaciente.Text.Trim() + " " + txtApellidoPaciente.Text.Trim();
+                        paciente.Primer_Nombre = txtNombrePaciente.Text;
+                        paciente.Primer_Apellido = txtApellidoPaciente.Text;
                         paciente.Sexo = char.Parse(cmbSexo.SelectedItem.ToString());
                         paciente.Edad = int.Parse(txtEdadPaciente.Text);
                         paciente.Correo = txtCorreoPaciente.Text;
                         paciente.Telefono = txtTelefonoPaciente.Text;
                         paciente.Direccion = txtDireccionPaciente.Text;
-                        paciente.EPS = cmbEPS.SelectedItem.ToString();
+                        paciente.Barrio = txtBarrioPaciente.Text;
+                        paciente.Calle = txtCallePaciente.Text;
+                        paciente.Ciudad_id = Convert.ToInt32(cmbCiudadPaciente.SelectedValue);
+                        paciente.EPS_id = Convert.ToInt32(cmbEPS.SelectedValue);
                         paciente.Tipo_sangre = cmbTipoDeSangre.SelectedItem.ToString();
-                        paciente.Id_responsable = responsable.DocumentoID;
+                        paciente.RH = char.Parse(cmbRH.SelectedItem.ToString());
+                        paciente.Documento_responsable = responsable.DocumentoID;
 
                         bool responsableExitoso = servicioUsuario.RegistrarResponsable(responsable);
                         bool pacienteExitoso = servicioUsuario.RegistrarPaciente(paciente, username, password);
@@ -124,11 +179,13 @@ namespace PRESENTACION
                     case "Doctor":
 
                         doctor.DocumentoID = txtCedula.Text;
-                        doctor.Nombre = txtNombres.Text.Trim() + " " + txtApellidos.Text.Trim();
-                        doctor.Especialidad = txtEspecialidad.Text;
+                        doctor.Primer_Nombre = txtNombres.Text;
+                        doctor.Primer_Apellido = txtApellidos.Text;
+                        doctor.Especialidad_id = Convert.ToInt32(cmbEspecialidad.SelectedValue);
                         doctor.Telefono = txtTelefono.Text;
                         doctor.Correo = txtCorreo.Text;
                         doctor.Estado = "Activado".Trim();
+                        doctor.NumeroLicencia = txtNumeroDeLicencia.Text;
 
                         Console.WriteLine(doctor.Estado);
 
@@ -162,7 +219,7 @@ namespace PRESENTACION
 
         private void Registro_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Login login = new Login();
+            frmLogin login = new frmLogin();
             login.Show();
         }
 

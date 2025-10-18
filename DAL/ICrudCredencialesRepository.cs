@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public interface ICrudUsuarioRepository
+    public interface ICrudCredencialesRepository
     {
         bool VerificarCredenciales(string username, string password);
         bool InsertarUsuarioPaciente(Paciente paciente, string username, string password, string rol);

@@ -11,12 +11,18 @@ namespace ENTITY
     {
         public Responsable() { }
 
-        public string DocumentoID { get; set; } 
-        public string Nombre { get; set; }
+        public string DocumentoID { get; set; }
+        public string Primer_Nombre { get; set; }
+        public string Segundo_Nombre { get; set; }
+        public string Primer_Apellido { get; set; }
+        public string Segundo_Apellido { get; set; }
         public string Parentesco { get; set; }
         public string Telefono { get; set; }
         public string Correo { get; set; }
         public string Direccion {  get; set; }
+        public string Barrio { get; set; }
+        public string Calle {  get; set; }
+        public int Ciudad_id { get; set; }
         public string Ocupacion { get; set; }
     }
 }

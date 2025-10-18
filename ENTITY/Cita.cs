@@ -15,7 +15,7 @@ namespace ENTITY
         public string Hora { get; set; }
         public string Estado { get; set; }
         public string Generalidad { get; set; }
-        public int Id_doctor { get; set; }
-        public int Id_paciente { get; set; }
+        public int Documento_doctor { get; set; }
+        public int Documento_paciente { get; set; }
     }
 }

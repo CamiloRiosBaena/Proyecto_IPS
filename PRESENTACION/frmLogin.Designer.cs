@@ -1,6 +1,6 @@
 ﻿namespace PRESENTACION
 {
-    partial class Login
+    partial class frmLogin
     {
         /// <summary>
         /// Variable del diseñador necesaria.

@@ -11,11 +11,11 @@ namespace BLL
 {
     public class ServicioUsuario : ICrudUsuario
     {
-        private UsuarioRepository usuarioRepository;
+        private CredencialesRepository usuarioRepository;
 
         public ServicioUsuario()
         {
-            usuarioRepository = new UsuarioRepository();
+            usuarioRepository = new CredencialesRepository();
         }
         public bool Login(string username, string password)
         {
@@ -115,7 +115,12 @@ namespace BLL
                 throw new ArgumentException("Documento del paciente es requerido");
             }
 
-            if (string.IsNullOrWhiteSpace(paciente.Nombre))
+            if (string.IsNullOrWhiteSpace(paciente.Primer_Nombre))
+            {
+                throw new ArgumentException("Nombre del paciente es requerido");
+            }
+
+            if (string.IsNullOrWhiteSpace(paciente.Primer_Apellido))
             {
                 throw new ArgumentException("Nombre del paciente es requerido");
             }
@@ -138,12 +143,17 @@ namespace BLL
                 throw new ArgumentException("Documento del doctor es requerido");
             }
 
-            if (string.IsNullOrWhiteSpace(doctor.Nombre))
+            if (string.IsNullOrWhiteSpace(doctor.Primer_Nombre))
             {
                 throw new ArgumentException("Nombre del doctor es requerido");
             }
 
-            if (string.IsNullOrWhiteSpace(doctor.Especialidad))
+            if (string.IsNullOrWhiteSpace(doctor.Primer_Apellido))
+            {
+                throw new ArgumentException("Nombre del doctor es requerido");
+            }
+
+            if (string.IsNullOrWhiteSpace(doctor.Especialidad_id.ToString()))
             {
                 throw new ArgumentException("Especialidad del doctor es requerida");
             }
@@ -161,9 +171,14 @@ namespace BLL
                 throw new ArgumentException("Documento del responsable es requerido");
             }
 
-            if (string.IsNullOrWhiteSpace(responsable.Nombre))
+            if (string.IsNullOrWhiteSpace(responsable.Primer_Nombre))
             {
                 throw new ArgumentException("Nombre del responsable es requerido");
+            }
+
+            if (string.IsNullOrWhiteSpace(responsable.Primer_Apellido))
+            {
+                throw new ArgumentException("Nombre del paciente es requerido");
             }
 
             if (string.IsNullOrWhiteSpace(responsable.Parentesco))

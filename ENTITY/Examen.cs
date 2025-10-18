@@ -10,9 +10,12 @@ namespace ENTITY
     {
         public Examen() { }
 
-        public int ID { get; set; }
-        public string Nombre_examen { get; set; }
+        public int Id { get; set; }
+        public int Id_historia { get; set; }
+        public string Nombre { get; set; }
         public string resultado { get; set; }
-        public int Id_consulta { get; set; }
+        public DateTime Fecha_solicitud { get; set; }
+        public DateTime Fecha_resultado { get; set; }
+        public string Estado { get; set; }
     }
 }

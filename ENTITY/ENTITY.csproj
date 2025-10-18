@@ -78,14 +78,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ciudad.cs" />
+    <Compile Include="EPS.cs" />
+    <Compile Include="Especialidad.cs" />
     <Compile Include="Responsable.cs" />
     <Compile Include="Cita.cs" />
-    <Compile Include="Consulta.cs" />
     <Compile Include="Doctor.cs" />
     <Compile Include="Examen.cs" />
     <Compile Include="HistoriaClinica.cs" />
     <Compile Include="Paciente.cs" />
-    <Compile Include="Usuario.cs" />
+    <Compile Include="Credenciales.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
