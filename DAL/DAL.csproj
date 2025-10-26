@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseDALRepository.cs" />
+    <Compile Include="CitaRepository.cs" />
     <Compile Include="CiudadRepository.cs" />
     <Compile Include="ConexionOracle.cs" />
     <Compile Include="DoctorRepository.cs" />

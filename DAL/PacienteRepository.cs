@@ -53,8 +53,8 @@ namespace DAL
                 EPS_id = Convert.ToInt32(reader["eps_id"]),
                 Tipo_sangre = reader["tipo_sangre"].ToString(),
                 RH = Convert.ToChar(reader["rh"]),
-                Documento_responsable = reader["responsable_documentoid"].ToString(),
-                Usuario_id = Convert.ToInt32(reader["usaurio_id"])
+                Documento_responsable = reader["documento_responsable"].ToString(),
+                Usuario_id = Convert.ToInt32(reader["usuario_id"])
             };
         }
 

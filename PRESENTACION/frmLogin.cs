@@ -25,8 +25,18 @@ namespace PRESENTACION
 
                 if (loginExitoso)
                 {
-                    MessageBox.Show($"Login exitoso\nRol: {tipoUsuario}", "Éxito",
-                                  MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    string Documento = servicioCredenciales.ObtenerDocumentoPorUsuario(username, tipoUsuario);
+
+                    if(tipoUsuario == "PACIENTE")
+                    {
+                        frmPacienteMain formPacienteMain = new frmPacienteMain(Documento);
+                        formPacienteMain.Show(this);
+                        this.Hide();
+                    }
+                    else if (tipoUsuario == "DOCTOR")
+                    {
+                        MessageBox.Show("Bonito");
+                    }
                 }
                 else
                 {
@@ -44,8 +54,8 @@ namespace PRESENTACION
         private void btnRegistro_Click(object sender, EventArgs e)
         {
             this.Hide();
-            frmRegistro formularioRegistro = new frmRegistro();
-            formularioRegistro.Show();
+            frmTipoRol formularioRol = new frmTipoRol();
+            formularioRol.Show();
         }
 
         private void Login_FormClosing(object sender, FormClosingEventArgs e)

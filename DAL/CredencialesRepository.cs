@@ -90,10 +90,6 @@ namespace DAL
                                    AND password = :password
                                    AND estado = 'Activo'";
 
-                    string hashCalculado = HashPassword(password);
-                    Console.WriteLine($"Password ingresado: {password}");
-                    Console.WriteLine($"Hash calculado: {hashCalculado}");
-
                     using (OracleCommand command = new OracleCommand(query, connection))
                     {
                         command.Parameters.Add("username", OracleDbType.Varchar2).Value = username;

@@ -30,7 +30,7 @@ namespace DAL
         {
             string nombre = reader["primer_nombre"].ToString();
             string apellido = reader["primer_apellido"].ToString();
-            return "Dr. " + nombre + " " + apellido;
+            return nombre + " " + apellido;
         }
 
         protected override Doctor MapearDesdeReader(OracleDataReader reader)
@@ -95,7 +95,8 @@ namespace DAL
         {
             return d.DocumentoID;
         }
-        public List<Doctor> ObtenerPorEspecialidad(string especialidadId)
+
+        public List<Doctor> ObtenerPorEspecialidad(int especialidadId)
         {
             List<Doctor> lista = new List<Doctor>();
 

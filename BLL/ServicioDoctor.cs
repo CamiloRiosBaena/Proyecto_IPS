@@ -115,9 +115,9 @@ namespace BLL
             return doctorRepository.ObtenerParaCombo();
         }
 
-        public List<Doctor> ObtenerPorEspecialidad(string especialidadId)
+        public List<Doctor> ObtenerPorEspecialidad(int especialidadId)
         {
-            if (string.IsNullOrEmpty(especialidadId))
+            if (string.IsNullOrEmpty(especialidadId.ToString()))
             {
                 throw new Exception("Debe especificar una especialidad");
             }

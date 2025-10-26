@@ -140,6 +140,10 @@ namespace BLL
 
             bool credencialInsertada = credencialesRepository.InsertarConHash(credencial, password);
 
+            if (!credencialInsertada)
+            {
+                throw new Exception("Error al crear las credenciales del doctor");
+            }
             paciente.Usuario_id = credencial.Id;
 
             bool pacienteInsertado = servicioPaciente.Insertar(paciente);
@@ -256,6 +260,49 @@ namespace BLL
         public object ObtenerDatosUsuario(string username)
         {
             return credencialesRepository.ObtenerPorNombreUsuario(username);
+        }
+
+        public string ObtenerDocumentoPorUsuario(string username, string tipoUsuario)
+        {
+            if (string.IsNullOrEmpty(username))
+            {
+                throw new Exception("El nombre de usuario es obligatorio");
+            }
+
+            if (tipoUsuario == "PACIENTE")
+            {
+                List<Paciente> pacientes = servicioPaciente.ObtenerTodos();
+                Credenciales credencial = credencialesRepository.ObtenerPorNombreUsuario(username);
+
+                if (credencial != null)
+                {
+                    foreach (Paciente p in pacientes)
+                    {
+                        if (p.Usuario_id == credencial.Id)
+                        {
+                            return p.DocumentoID;
+                        }
+                    }
+                }
+            }
+            else if (tipoUsuario == "DOCTOR")
+            {
+                List<Doctor> doctores = servicoDoctor.ObtenerTodos();
+                Credenciales credencial = credencialesRepository.ObtenerPorNombreUsuario(username);
+
+                if (credencial != null)
+                {
+                    foreach (Doctor d in doctores)
+                    {
+                        if (d.Usuario_id == credencial.Id)
+                        {
+                            return d.DocumentoID;
+                        }
+                    }
+                }
+            }
+
+            throw new Exception("No se encontró el documento asociado al usuario");
         }
 
         public bool ExisteUsuario(string username)

@@ -22,6 +22,10 @@ namespace ENTITY
         public string Estado { get; set; }
         public string HoraAtencion { get; set; }
         public int Usuario_id { get; set; }
-        
+
+        public string NombreCompleto
+        {
+            get { return Primer_Nombre + " " + Primer_Apellido; }
+        }
     }
 }

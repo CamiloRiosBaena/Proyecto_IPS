@@ -14,8 +14,8 @@ namespace ENTITY
         public DateTime Fecha { get; set; }
         public string Hora { get; set; }
         public string Estado { get; set; }
-        public string Generalidad { get; set; }
-        public int Documento_doctor { get; set; }
-        public int Documento_paciente { get; set; }
+        public int Especialidad_id { get; set; }
+        public string Documento_doctor { get; set; }
+        public string Documento_paciente { get; set; }
     }
 }

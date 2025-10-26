@@ -81,7 +81,6 @@
     <Compile Include="ICrud.cs" />
     <Compile Include="ServicioCita.cs" />
     <Compile Include="ServicioCiudad.cs" />
-    <Compile Include="ServicioConsulta.cs" />
     <Compile Include="ServicioDoctor.cs" />
     <Compile Include="ServicioEPS.cs" />
     <Compile Include="ServicioEspecialidad.cs" />
