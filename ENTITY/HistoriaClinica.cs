@@ -8,13 +8,13 @@ namespace ENTITY
 {
     public class HistoriaClinica
     {
-        public HistoriaClinica() { }    
+        public HistoriaClinica() { }
 
-        public int Id { get; set; }
-        public int Documento_paciente { get; set; }
-        public int Documento_doctor { get; set; }
+        public int Historia_id { get; set; }
+        public string Paciente_documentoid { get; set; }
+        public string Doctor_documentoid { get; set; }
         public int Cita_id { get; set; }
-        public DateTime Fecha_apertura { get; set; }
+        public int Especialidad_id { get; set; }
         public string Diagnostico { get; set; }
         public string Tratamiento { get; set; }
         public string Observaciones { get; set; }

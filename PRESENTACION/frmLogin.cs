@@ -35,7 +35,9 @@ namespace PRESENTACION
                     }
                     else if (tipoUsuario == "DOCTOR")
                     {
-                        MessageBox.Show("Bonito");
+                        frmDoctorMain formDoctorMain = new frmDoctorMain(Documento);
+                        formDoctorMain.Show(this);
+                        this.Hide();
                     }
                 }
                 else

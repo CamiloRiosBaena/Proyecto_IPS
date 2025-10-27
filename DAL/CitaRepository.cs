@@ -54,42 +54,42 @@ namespace DAL
         {
             return $@"UPDATE {NombreTabla} 
                     SET paciente_documentoid = :paciente_documentoid,
-                        doctor_documentoid = :doctor_documentoid,
-                        fecha = TO_DATE(:fecha, 'DD/MM/YYYY'),
-                        hora = :hora,
-                        especialidad_id = :especialidad_id,
-                        estado = :estado,
+                    doctor_documentoid = :doctor_documentoid,
+                    fecha = TO_DATE(:fecha, 'DD/MM/YYYY'),
+                    hora = :hora,
+                    especialidad_id = :especialidad_id,
+                    estado = :estado,
                     WHERE cita_id = :cita_id";
         }
 
-        protected override void AgregarParametrosInsert(OracleCommand cmd, Cita entidad)
+        protected override void AgregarParametrosInsert(OracleCommand cmd, Cita c)
         {
-            cmd.Parameters.Add("cita_id", OracleDbType.Int32).Value =  entidad.Id;
-            cmd.Parameters.Add("paciente_documentoid", OracleDbType.Varchar2).Value = entidad.Documento_paciente;
-            cmd.Parameters.Add("doctor_documentoid", OracleDbType.Varchar2).Value = entidad.Documento_doctor;
+            cmd.Parameters.Add("cita_id", OracleDbType.Int32).Value =  c.Id;
+            cmd.Parameters.Add("paciente_documentoid", OracleDbType.Varchar2).Value = c.Documento_paciente;
+            cmd.Parameters.Add("doctor_documentoid", OracleDbType.Varchar2).Value = c.Documento_doctor;
 
-            DateTime Fecha = new DateTime(entidad.Fecha.Year, entidad.Fecha.Month, entidad.Fecha.Day);
+            DateTime Fecha = new DateTime(c.Fecha.Year, c.Fecha.Month, c.Fecha.Day);
             cmd.Parameters.Add("fecha", OracleDbType.Date).Value = Fecha;
 
-            cmd.Parameters.Add("hora", OracleDbType.Varchar2).Value = entidad.Hora;
-            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = entidad.Especialidad_id;
-            cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = entidad.Estado;
+            cmd.Parameters.Add("hora", OracleDbType.Varchar2).Value = c.Hora;
+            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = c.Especialidad_id;
+            cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = c.Estado;
         }
 
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, Cita entidad)
+        protected override void AgregarParametrosUpdate(OracleCommand cmd, Cita c)
         {
-            cmd.Parameters.Add("cita_id", OracleDbType.Int32).Value = entidad.Id;
-            cmd.Parameters.Add("paciente_documentoid", OracleDbType.Varchar2).Value = entidad.Documento_paciente;
-            cmd.Parameters.Add("doctor_documentoid", OracleDbType.Varchar2).Value = entidad.Documento_doctor;
-            cmd.Parameters.Add("fecha", OracleDbType.Date).Value = entidad.Fecha.ToString("dd/MM/yyyy");
-            cmd.Parameters.Add("hora", OracleDbType.Varchar2).Value = entidad.Hora;
-            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = entidad.Especialidad_id;
-            cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = entidad.Estado;
+            cmd.Parameters.Add("cita_id", OracleDbType.Int32).Value = c.Id;
+            cmd.Parameters.Add("paciente_documentoid", OracleDbType.Varchar2).Value = c.Documento_paciente;
+            cmd.Parameters.Add("doctor_documentoid", OracleDbType.Varchar2).Value = c.Documento_doctor;
+            cmd.Parameters.Add("fecha", OracleDbType.Date).Value = c.Fecha.ToString("dd/MM/yyyy");
+            cmd.Parameters.Add("hora", OracleDbType.Varchar2).Value = c.Hora;
+            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = c.Especialidad_id;
+            cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = c.Estado;
         }
 
-        protected override object ObtenerValorId(Cita entidad)
+        protected override object ObtenerValorId(Cita c)
         {
-            return entidad.Id;
+            return c.Id;
         }
 
         protected override string ObtenerTextoMostrar(OracleDataReader reader)
@@ -127,7 +127,7 @@ namespace DAL
                     string query = $"SELECT * FROM {NombreTabla} WHERE paciente_documentoid = :doc ORDER BY fecha DESC, hora DESC";
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("doc", documentoPaciente));
+                        cmd.Parameters.Add("doc", OracleDbType.Varchar2).Value = documentoPaciente;
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -155,7 +155,7 @@ namespace DAL
                     string query = $"SELECT * FROM {NombreTabla} WHERE doctor_documentoid = :doc ORDER BY fecha DESC, hora DESC";
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("doc", documentoDoctor));
+                        cmd.Parameters.Add("doc", OracleDbType.Varchar2).Value = documentoDoctor;
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
