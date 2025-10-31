@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class DoctorRepository : BaseDALRepository<Doctor>
+    public class DoctorRepository : BaseConsultaRepository<Doctor>, IPLSQLRepository<Doctor>
     {
         protected override string NombreTabla
         {
@@ -30,7 +30,7 @@ namespace DAL
         {
             string nombre = reader["primer_nombre"].ToString();
             string apellido = reader["primer_apellido"].ToString();
-            return nombre + " " + apellido;
+            return $"{nombre} {apellido}";
         }
 
         protected override Doctor MapearDesdeReader(OracleDataReader reader)
@@ -51,64 +51,153 @@ namespace DAL
             };
         }
 
-        protected override string ObtenerQueryInsert()
-        {
-            return $@"INSERT INTO {NombreTabla}
-                             (documentoid, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, 
-                             especialidad_id, telefono, correo, horaatencion, usuario_id, numero_licencia) 
-                             VALUES (:documentoid, :primer_nombre, :segundo_nombre,:primer_apellido, :segundo_apellido, 
-                             :especialidad_id, :telefono, :correo, :horaatencion, :usuario_id, :numero_licencia)";
-        }
-
-        protected override void AgregarParametrosInsert(OracleCommand cmd, Doctor doctor)
-        {
-            cmd.Parameters.Add("documentoid", OracleDbType.Varchar2).Value = doctor.DocumentoID;
-            cmd.Parameters.Add("primer_nombre", OracleDbType.Varchar2).Value = doctor.Primer_Nombre;
-            cmd.Parameters.Add("segundo_nombre", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Nombre ?? DBNull.Value;
-            cmd.Parameters.Add("primer_apellido", OracleDbType.Varchar2).Value = doctor.Primer_Apellido;
-            cmd.Parameters.Add("segundo_apellido", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Apellido ?? DBNull.Value;
-            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = doctor.Especialidad_id;
-            cmd.Parameters.Add("telefono", OracleDbType.Varchar2).Value = doctor.Telefono;
-            cmd.Parameters.Add("correo", OracleDbType.Varchar2).Value = doctor.Correo;
-            //cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = doctor.Estado;
-            cmd.Parameters.Add("horaatencion", OracleDbType.Varchar2).Value = (object)doctor.HoraAtencion ?? DBNull.Value;
-            cmd.Parameters.Add("usuario_id", OracleDbType.Int32).Value = doctor.Usuario_id;
-            cmd.Parameters.Add("numero_licencia", OracleDbType.Varchar2).Value = doctor.NumeroLicencia;
-        }
-
-        protected override string ObtenerQueryUpdate()
-        {
-            return $@"UPDATE {NombreTabla} 
-                     SET numero_licencia = :licencia, primer_nombre = :pnombre, segundo_nombre = :snombre,
-                         primer_apellido = :papellido, segundo_apellido = :sapellido,
-                         telefono = :tel, correo = :correo, especialidad_id = :especialidad,
-                         horaatencion = :hora
-                     WHERE documentoid = :id";
-        }
-
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, Doctor d)
-        {
-            AgregarParametrosInsert(cmd, d);
-        }
-
         protected override object ObtenerValorId(Doctor d)
         {
             return d.DocumentoID;
         }
 
-        public List<Doctor> ObtenerPorEspecialidad(int especialidadId)
+        public bool Insertar(Doctor doctor)
         {
-            List<Doctor> lista = new List<Doctor>();
-
             try
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} WHERE especialidad_id = :esp ORDER BY primer_nombre";
+                    using (OracleCommand cmd = new OracleCommand("SP_INSERTAR_DOCTOR", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
+                        cmd.Parameters.Add("p_documento", OracleDbType.Varchar2).Value = doctor.DocumentoID;
+                        cmd.Parameters.Add("p_numero_licencia", OracleDbType.Varchar2).Value = doctor.NumeroLicencia;
+                        cmd.Parameters.Add("p_primer_nombre", OracleDbType.Varchar2).Value = doctor.Primer_Nombre;
+                        cmd.Parameters.Add("p_segundo_nombre", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Nombre ?? DBNull.Value;
+                        cmd.Parameters.Add("p_primer_apellido", OracleDbType.Varchar2).Value = doctor.Primer_Apellido;
+                        cmd.Parameters.Add("p_segundo_apellido", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Apellido ?? DBNull.Value;
+                        cmd.Parameters.Add("p_telefono", OracleDbType.Varchar2).Value = doctor.Telefono;
+                        cmd.Parameters.Add("p_correo", OracleDbType.Varchar2).Value = doctor.Correo;
+                        cmd.Parameters.Add("p_especialidad_id", OracleDbType.Int32).Value = doctor.Especialidad_id;
+                        cmd.Parameters.Add("p_hora_atencion", OracleDbType.Varchar2).Value = (object)doctor.HoraAtencion ?? DBNull.Value;
+                        cmd.Parameters.Add("p_usuario_id", OracleDbType.Int32).Value = doctor.Usuario_id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar doctor: " + ex.Message);
+            }
+        }
+
+        public bool Actualizar(Doctor doctor)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ACTUALIZAR_DOCTOR", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_documento", OracleDbType.Varchar2).Value = doctor.DocumentoID;
+                        cmd.Parameters.Add("p_numero_licencia", OracleDbType.Varchar2).Value = doctor.NumeroLicencia;
+                        cmd.Parameters.Add("p_primer_nombre", OracleDbType.Varchar2).Value = doctor.Primer_Nombre;
+                        cmd.Parameters.Add("p_segundo_nombre", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Nombre ?? DBNull.Value;
+                        cmd.Parameters.Add("p_primer_apellido", OracleDbType.Varchar2).Value = doctor.Primer_Apellido;
+                        cmd.Parameters.Add("p_segundo_apellido", OracleDbType.Varchar2).Value = (object)doctor.Segundo_Apellido ?? DBNull.Value;
+                        cmd.Parameters.Add("p_telefono", OracleDbType.Varchar2).Value = doctor.Telefono;
+                        cmd.Parameters.Add("p_correo", OracleDbType.Varchar2).Value = doctor.Correo;
+                        cmd.Parameters.Add("p_especialidad_id", OracleDbType.Int32).Value = doctor.Especialidad_id;
+                        cmd.Parameters.Add("p_hora_atencion", OracleDbType.Varchar2).Value = (object)doctor.HoraAtencion ?? DBNull.Value;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar doctor: " + ex.Message);
+            }
+        }
+
+        public bool Eliminar(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ELIMINAR_GENERICO", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo_id", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor_id", OracleDbType.Varchar2).Value = id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar doctor: " + ex.Message);
+            }
+        }
+
+        public bool Existe(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_GENERICO(:p_tabla, :p_campo, :p_valor) FROM DUAL";
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("esp", especialidadId));
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor", OracleDbType.Varchar2).Value = id;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar existencia: " + ex.Message);
+            }
+        }
+
+        public List<Doctor> ObtenerPorEspecialidad(int especialidadId)
+        {
+            List<Doctor> lista = new List<Doctor>();
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_DOCTORES_ESP", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_especialidad_id", OracleDbType.Int32).Value = especialidadId;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
 
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
@@ -125,9 +214,7 @@ namespace DAL
             {
                 throw new Exception("Error al obtener doctores por especialidad: " + ex.Message);
             }
-
             return lista;
         }
     }
-
 }

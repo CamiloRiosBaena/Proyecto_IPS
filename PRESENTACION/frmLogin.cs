@@ -29,14 +29,14 @@ namespace PRESENTACION
 
                     if(tipoUsuario == "PACIENTE")
                     {
-                        frmPacienteMain formPacienteMain = new frmPacienteMain(Documento);
-                        formPacienteMain.Show(this);
+                        frmPacienteMenu formPacienteMenu = new frmPacienteMenu(Documento);
+                        formPacienteMenu.Show(this);
                         this.Hide();
                     }
                     else if (tipoUsuario == "DOCTOR")
                     {
-                        frmDoctorMain formDoctorMain = new frmDoctorMain(Documento);
-                        formDoctorMain.Show(this);
+                        frmDoctorMenu formDoctorMenu = new frmDoctorMenu(Documento);
+                        formDoctorMenu.Show(this);
                         this.Hide();
                     }
                 }

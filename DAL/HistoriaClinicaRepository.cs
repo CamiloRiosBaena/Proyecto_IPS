@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class HistoriaClinicaRepository : BaseDALRepository<HistoriaClinica>
+    public class HistoriaClinicaRepository : BaseConsultaRepository<HistoriaClinica>, IPLSQLRepository<HistoriaClinica>
     {
         protected override string NombreTabla
         {
@@ -40,61 +40,135 @@ namespace DAL
             };
         }
 
-        protected override string ObtenerQueryInsert()
-        {
-            return @"INSERT INTO historias_clinicas 
-                    (historia_id, paciente_documentoid, doctor_documentoid, cita_id, 
-                     especialidad_id, diagnostico, tratamiento, observaciones)
-                    VALUES 
-                    (:historia_id, :paciente_documentoid, :doctor_documentoid, :cita_id, 
-                     :especialidad_id, :diagnostico, :tratamiento, :observaciones)";
-        }
-
-        protected override string ObtenerQueryUpdate()
-        {
-            return @"UPDATE historias_clinicas 
-                    SET diagnostico = :diagnostico,
-                        tratamiento = :tratamiento,
-                        observaciones = :observaciones
-                    WHERE historia_id = :historia_id";
-        }
-
-        protected override void AgregarParametrosInsert(OracleCommand cmd, HistoriaClinica h)
-        {
-            cmd.Parameters.Add("historia_id", OracleDbType.Int32).Value = h.Historia_id;
-            cmd.Parameters.Add("paciente_documentoid", OracleDbType.Varchar2).Value = h.Paciente_documentoid;
-            cmd.Parameters.Add("doctor_documentoid", OracleDbType.Varchar2).Value = h.Doctor_documentoid;
-            cmd.Parameters.Add("cita_id", OracleDbType.Int32).Value = h.Cita_id;
-            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = h.Especialidad_id;
-            cmd.Parameters.Add("diagnostico", OracleDbType.Varchar2).Value = (object)h.Diagnostico ?? DBNull.Value;
-            cmd.Parameters.Add("tratamiento", OracleDbType.Varchar2).Value = (object)h.Tratamiento ?? DBNull.Value;
-            cmd.Parameters.Add("observaciones", OracleDbType.Varchar2).Value = (object)h.Observaciones ?? DBNull.Value;
-        }
-
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, HistoriaClinica h)
-        {
-            cmd.Parameters.Add("diagnostico", OracleDbType.Varchar2).Value = (object)h.Diagnostico ?? DBNull.Value;
-            cmd.Parameters.Add("tratamiento", OracleDbType.Varchar2).Value = (object)h.Tratamiento ?? DBNull.Value;
-            cmd.Parameters.Add("observaciones", OracleDbType.Varchar2).Value = (object)h.Observaciones ?? DBNull.Value;
-            cmd.Parameters.Add("historia_id", OracleDbType.Int32).Value = h.Historia_id;
-        }
-
-        protected override object ObtenerValorId(HistoriaClinica historia)
-        {
-            return historia.Historia_id;
-        }
-
         protected override string ObtenerTextoMostrar(OracleDataReader reader)
         {
             return $"Historia #{reader["historia_id"]}";
         }
+
+        public bool Insertar(HistoriaClinica h)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_INSERTAR_HISTORIA", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_historia_id", OracleDbType.Int32).Value = h.Historia_id;
+                        cmd.Parameters.Add("p_paciente_doc", OracleDbType.Varchar2).Value = h.Paciente_documentoid;
+                        cmd.Parameters.Add("p_doctor_doc", OracleDbType.Varchar2).Value = h.Doctor_documentoid;
+                        cmd.Parameters.Add("p_cita_id", OracleDbType.Int32).Value = h.Cita_id;
+                        cmd.Parameters.Add("p_especialidad_id", OracleDbType.Int32).Value = h.Especialidad_id;
+                        cmd.Parameters.Add("p_diagnostico", OracleDbType.Varchar2).Value = (object)h.Diagnostico ?? DBNull.Value;
+                        cmd.Parameters.Add("p_tratamiento", OracleDbType.Varchar2).Value = (object)h.Tratamiento ?? DBNull.Value;
+                        cmd.Parameters.Add("p_observaciones", OracleDbType.Varchar2).Value = (object)h.Observaciones ?? DBNull.Value;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar historia clínica: " + ex.Message);
+            }
+        }
+
+        public bool Actualizar(HistoriaClinica h)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ACTUALIZAR_HISTORIA", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_historia_id", OracleDbType.Int32).Value = h.Historia_id;
+                        cmd.Parameters.Add("p_diagnostico", OracleDbType.Varchar2).Value = (object)h.Diagnostico ?? DBNull.Value;
+                        cmd.Parameters.Add("p_tratamiento", OracleDbType.Varchar2).Value = (object)h.Tratamiento ?? DBNull.Value;
+                        cmd.Parameters.Add("p_observaciones", OracleDbType.Varchar2).Value = (object)h.Observaciones ?? DBNull.Value;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar historia clínica: " + ex.Message);
+            }
+        }
+
+        public bool Eliminar(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ELIMINAR_GENERICO", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo_id", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor_id", OracleDbType.Varchar2).Value = id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar historia clínica: " + ex.Message);
+            }
+        }
+
+        public bool Existe(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_GENERICO(:p_tabla, :p_campo, :p_valor) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor", OracleDbType.Varchar2).Value = id;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar existencia: " + ex.Message);
+            }
+        }
+
         public int ObtenerSiguienteId()
         {
             try
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT NVL(MAX(historia_id), 0) + 1 FROM {NombreTabla}";
+                    string query = "SELECT FN_SIGUIENTE_ID_HISTORIA() FROM DUAL";
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
                         return Convert.ToInt32(cmd.ExecuteScalar());
@@ -106,6 +180,37 @@ namespace DAL
                 throw new Exception("Error al obtener siguiente ID: " + ex.Message);
             }
         }
+
+        public bool GuardarHistoria(int citaId, string diagnostico, string tratamiento, string observaciones)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_GUARDAR_HISTORIA", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_cita_id", OracleDbType.Int32).Value = citaId;
+                        cmd.Parameters.Add("p_diagnostico", OracleDbType.Varchar2).Value = (object)diagnostico ?? DBNull.Value;
+                        cmd.Parameters.Add("p_tratamiento", OracleDbType.Varchar2).Value = (object)tratamiento ?? DBNull.Value;
+                        cmd.Parameters.Add("p_observaciones", OracleDbType.Varchar2).Value = (object)observaciones ?? DBNull.Value;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al guardar historia: " + ex.Message);
+            }
+        }
+
         public List<HistoriaClinica> ObtenerPorPaciente(string documentoPaciente)
         {
             List<HistoriaClinica> lista = new List<HistoriaClinica>();
@@ -113,14 +218,16 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $@"SELECT h.* 
-                                    FROM {NombreTabla} h
-                                    INNER JOIN s_citas c ON h.cita_id = c.cita_id
-                                    WHERE h.paciente_documentoid = :doc
-                                    ORDER BY c.fecha DESC";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_HISTORIAS_PACIENTE", conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("doc", documentoPaciente));
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_paciente_doc", OracleDbType.Varchar2).Value = documentoPaciente;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -137,39 +244,7 @@ namespace DAL
             }
             return lista;
         }
-        public List<HistoriaClinica> ObtenerPorPacienteYEspecialidad(string documentoPaciente, int especialidadId)
-        {
-            List<HistoriaClinica> lista = new List<HistoriaClinica>();
-            try
-            {
-                using (OracleConnection conn = conexionOracle.ObtenerConexion())
-                {
-                    string query = $@"SELECT h.* 
-                                    FROM {NombreTabla} h
-                                    INNER JOIN s_citas c ON h.cita_id = c.cita_id
-                                    WHERE h.paciente_documentoid = :doc 
-                                    AND h.especialidad_id = :esp
-                                    ORDER BY c.fecha DESC";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
-                    {
-                        cmd.Parameters.Add(new OracleParameter("doc", documentoPaciente));
-                        cmd.Parameters.Add(new OracleParameter("esp", especialidadId));
-                        using (OracleDataReader reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                lista.Add(MapearDesdeReader(reader));
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al obtener historias por especialidad: " + ex.Message);
-            }
-            return lista;
-        }
+
         public List<HistoriaClinica> ObtenerPorDoctor(string documentoDoctor)
         {
             List<HistoriaClinica> lista = new List<HistoriaClinica>();
@@ -177,14 +252,16 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $@"SELECT h.* 
-                                    FROM {NombreTabla} h
-                                    INNER JOIN s_citas c ON h.cita_id = c.cita_id
-                                    WHERE h.doctor_documentoid = :doc
-                                    ORDER BY c.fecha DESC";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_HISTORIAS_DOCTOR", conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("doc", documentoDoctor));
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_doctor_doc", OracleDbType.Varchar2).Value = documentoDoctor;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -201,36 +278,58 @@ namespace DAL
             }
             return lista;
         }
-        public bool ExistePorCita(int citaId)
+
+        public List<HistoriaClinica> ObtenerPorPacienteYEspecialidad(string documentoPaciente, int especialidadId)
         {
+            List<HistoriaClinica> lista = new List<HistoriaClinica>();
             try
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT COUNT(*) FROM {NombreTabla} WHERE cita_id = :cita";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_HISTORIAS_ESP", conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("cita", citaId));
-                        int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        return count > 0;
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_paciente_doc", OracleDbType.Varchar2).Value = documentoPaciente;
+                        cmd.Parameters.Add("p_especialidad_id", OracleDbType.Int32).Value = especialidadId;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
+                        using (OracleDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                lista.Add(MapearDesdeReader(reader));
+                            }
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al verificar historia por cita: " + ex.Message);
+                throw new Exception("Error al obtener historias por especialidad: " + ex.Message);
             }
+            return lista;
         }
+
         public HistoriaClinica ObtenerPorCita(int citaId)
         {
             try
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} WHERE cita_id = :cita";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_HISTORIA_CITA", conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("cita", citaId));
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_cita_id", OracleDbType.Int32).Value = citaId;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -246,6 +345,32 @@ namespace DAL
             {
                 throw new Exception("Error al obtener historia por cita: " + ex.Message);
             }
+        }
+
+        public bool ExistePorCita(int citaId)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_HISTORIA_CITA(:p_cita_id) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_cita_id", OracleDbType.Int32).Value = citaId;
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar historia por cita: " + ex.Message);
+            }
+        }
+
+        protected override object ObtenerValorId(HistoriaClinica historia)
+        {
+            return historia.Historia_id;
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class EspecialidadRepository : BaseDALRepository<Especialidad>
+    public class EspecialidadRepository : BaseConsultaRepository<Especialidad>, IPLSQLRepository<Especialidad>
     {
         protected override string NombreTabla
         {
@@ -39,33 +39,118 @@ namespace DAL
             };
         }
 
-        protected override string ObtenerQueryInsert()
-        {
-            return $@"INSERT INTO {NombreTabla} (especialidad_id, nombre) 
-                     VALUES (:id, :nombre)";
-        }
-
-        protected override void AgregarParametrosInsert(OracleCommand cmd, Especialidad especialidad)
-        {
-            cmd.Parameters.Add(new OracleParameter("id", especialidad.Id));
-            cmd.Parameters.Add(new OracleParameter("nombre", especialidad.Nombre));
-        }
-
-        protected override string ObtenerQueryUpdate()
-        {
-            return $@"UPDATE {NombreTabla} 
-                     SET nombre = :nombre 
-                     WHERE especialidad_id = :id";
-        }
-
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, Especialidad especialidad)
-        {
-            AgregarParametrosInsert(cmd, especialidad);
-        }
-
         protected override object ObtenerValorId(Especialidad especialidad)
         {
             return especialidad.Id;
+        }
+
+        public bool Insertar(Especialidad especialidad)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_INSERTAR_ESPECIALIDAD", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_id", OracleDbType.Int32).Value = especialidad.Id;
+                        cmd.Parameters.Add("p_nombre", OracleDbType.Varchar2).Value = especialidad.Nombre;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar especialidad: " + ex.Message);
+            }
+        }
+
+        public bool Actualizar(Especialidad especialidad)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ACTUALIZAR_ESPECIALIDAD", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_id", OracleDbType.Int32).Value = especialidad.Id;
+                        cmd.Parameters.Add("p_nombre", OracleDbType.Varchar2).Value = especialidad.Nombre;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar especialidad: " + ex.Message);
+            }
+        }
+
+        public bool Eliminar(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ELIMINAR_GENERICO", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo_id", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor_id", OracleDbType.Varchar2).Value = id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar especialidad: " + ex.Message);
+            }
+        }
+
+        public bool Existe(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_GENERICO(:p_tabla, :p_campo, :p_valor) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor", OracleDbType.Varchar2).Value = id;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar existencia: " + ex.Message);
+            }
         }
     }
 }

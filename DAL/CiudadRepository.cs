@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class CiudadRepository : BaseDALRepository<Ciudad>
+    public class CiudadRepository : BaseConsultaRepository<Ciudad>, IPLSQLRepository<Ciudad>
     {
         protected override string NombreTabla
         {
@@ -29,7 +29,7 @@ namespace DAL
         {
             string nombre = reader["nombre"].ToString();
             string departamento = reader["departamento"].ToString();
-            return nombre + " - " + departamento;
+            return $"{nombre} - {departamento}";
         }
 
         protected override Ciudad MapearDesdeReader(OracleDataReader reader)
@@ -43,32 +43,115 @@ namespace DAL
             };
         }
 
-        protected override string ObtenerQueryInsert()
+        public bool Insertar(Ciudad ciudad)
         {
-            return $@"INSERT INTO {NombreTabla} (ciudad_id, nombre, departamento, pais) 
-                     VALUES (:id, :nombre, :departamento, :pais)";
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_INSERTAR_CIUDAD", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_id", OracleDbType.Int32).Value = ciudad.Id;
+                        cmd.Parameters.Add("p_nombre", OracleDbType.Varchar2).Value = ciudad.Nombre;
+                        cmd.Parameters.Add("p_departamento", OracleDbType.Varchar2).Value = ciudad.Departamento;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar ciudad: " + ex.Message);
+            }
         }
 
-        protected override void AgregarParametrosInsert(OracleCommand cmd, Ciudad ciudad)
+        public bool Actualizar(Ciudad ciudad)
         {
-            cmd.Parameters.Add(new OracleParameter("id", ciudad.Id));
-            cmd.Parameters.Add(new OracleParameter("nombre", ciudad.Nombre));
-            cmd.Parameters.Add(new OracleParameter("departamento", ciudad.Departamento));
-            cmd.Parameters.Add(new OracleParameter("pais", ciudad.Pais));
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ACTUALIZAR_CIUDAD", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_id", OracleDbType.Int32).Value = ciudad.Id;
+                        cmd.Parameters.Add("p_nombre", OracleDbType.Varchar2).Value = ciudad.Nombre;
+                        cmd.Parameters.Add("p_departamento", OracleDbType.Varchar2).Value = ciudad.Departamento;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar ciudad: " + ex.Message);
+            }
         }
 
-        protected override string ObtenerQueryUpdate()
+        public bool Eliminar(string id)
         {
-            return $@"UPDATE {NombreTabla} 
-                     SET nombre = :nombre, departamento = :departamento, pais = :pais 
-                     WHERE ciudad_id = :id";
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ELIMINAR_GENERICO", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo_id", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor_id", OracleDbType.Varchar2).Value = id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar ciudad: " + ex.Message);
+            }
         }
 
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, Ciudad ciudad)
+        public bool Existe(string id)
         {
-            cmd.Parameters.Add(new OracleParameter("nombre", ciudad.Nombre));
-            cmd.Parameters.Add(new OracleParameter("departamento", ciudad.Departamento));
-            cmd.Parameters.Add(new OracleParameter("pais", ciudad.Pais));
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_GENERICO(:p_tabla, :p_campo, :p_valor) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor", OracleDbType.Varchar2).Value = id;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar existencia: " + ex.Message);
+            }
         }
 
         protected override object ObtenerValorId(Ciudad ciudad)

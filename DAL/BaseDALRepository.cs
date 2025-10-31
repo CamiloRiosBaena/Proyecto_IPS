@@ -9,18 +9,14 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public abstract class BaseDALRepository<T>
+    public abstract class BaseConsultaRepository<T>
     {
         protected abstract string NombreTabla { get; }
         protected abstract string Id { get; }
         protected abstract string Primer_Nombre { get; }
 
-        protected abstract string ObtenerTextoMostrar(OracleDataReader reader);
         protected abstract T MapearDesdeReader(OracleDataReader reader);
-        protected abstract void AgregarParametrosInsert(OracleCommand cmd, T entidad);
-        protected abstract void AgregarParametrosUpdate(OracleCommand cmd, T entidad);
-        protected abstract string ObtenerQueryInsert();
-        protected abstract string ObtenerQueryUpdate();
+        protected abstract string ObtenerTextoMostrar(OracleDataReader reader);
         protected abstract object ObtenerValorId(T entidad);
 
         public ConexionOracle conexionOracle = new ConexionOracle();
@@ -53,11 +49,12 @@ namespace DAL
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al obtener {NombreTabla} para combo: ");
+                throw new Exception($"Error al obtener {NombreTabla} para combo: {ex.Message}");
             }
 
             return dt;
         }
+
         public List<T> ObtenerTodos()
         {
             List<T> lista = new List<T>();
@@ -83,11 +80,12 @@ namespace DAL
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al obtener {NombreTabla}: " + ex.Message);
+                throw new Exception($"Error al obtener {NombreTabla}: {ex.Message}");
             }
 
             return lista;
         }
+
         public T ObtenerPorId(string id)
         {
             T entidad = default(T);
@@ -107,6 +105,7 @@ namespace DAL
                             if (reader.Read())
                             {
                                 entidad = MapearDesdeReader(reader);
+                                Console.WriteLine(entidad);
                             }
                         }
                     }
@@ -114,95 +113,10 @@ namespace DAL
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al obtener {NombreTabla} por ID: ");
+                throw new Exception($"Error al obtener {NombreTabla} por ID: {ex.Message}");
             }
 
             return entidad;
-        }
-        public bool Insertar(T entidad)
-        {
-            try
-            {
-                using (OracleConnection conn = conexionOracle.ObtenerConexion())
-                {
-                    string query = ObtenerQueryInsert();
-
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
-                    {
-                        AgregarParametrosInsert(cmd, entidad);
-                        int filasAfectadas = cmd.ExecuteNonQuery();
-                        return filasAfectadas > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al insertar en {NombreTabla}: " + ex.Message);
-            }
-        }
-        public bool Actualizar(T entidad)
-        {
-            try
-            {
-                using (OracleConnection conn = conexionOracle.ObtenerConexion())
-                {
-                    string query = ObtenerQueryUpdate();
-
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
-                    {
-                        AgregarParametrosUpdate(cmd, entidad);
-                        cmd.Parameters.Add(new OracleParameter("id", ObtenerValorId(entidad)));
-                        int filasAfectadas = cmd.ExecuteNonQuery();
-                        return filasAfectadas > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al actualizar {NombreTabla}: " + ex.Message);
-            }
-        }
-        public bool Eliminar(string id)
-        {
-            try
-            {
-                using (OracleConnection conn = conexionOracle.ObtenerConexion())
-                {
-                    string query = $"DELETE FROM {NombreTabla} WHERE {Id} = :id";
-
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
-                    {
-                        cmd.Parameters.Add(new OracleParameter("id", id));
-                        int filasAfectadas = cmd.ExecuteNonQuery();
-                        return filasAfectadas > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al eliminar de {NombreTabla}: ");
-            }
-        }
-        public bool Existe(string id)
-        {
-            try
-            {
-                using (OracleConnection conn = conexionOracle.ObtenerConexion())
-                {
-                    string query = $"SELECT COUNT(*) FROM {NombreTabla} WHERE {Id} = :id";
-
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
-                    {
-                        cmd.Parameters.Add(new OracleParameter("id", id));
-                        int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        return count > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al verificar existencia en {NombreTabla}: ");
-            }
         }
     }
 }

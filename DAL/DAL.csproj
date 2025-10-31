@@ -87,6 +87,7 @@
     <Compile Include="EspecialidadRepository.cs" />
     <Compile Include="CredencialesRepository.cs" />
     <Compile Include="HistoriaClinicaRepository.cs" />
+    <Compile Include="IPLSQLRepository.cs" />
     <Compile Include="PacienteRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResponsableRepository.cs" />

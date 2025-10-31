@@ -83,6 +83,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="copia.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="copia.Designer.cs">
+      <DependentUpon>copia.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmDoctor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -94,6 +100,12 @@
     </Compile>
     <Compile Include="frmDoctorMain.Designer.cs">
       <DependentUpon>frmDoctorMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="frmDoctorMenu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDoctorMenu.Designer.cs">
+      <DependentUpon>frmDoctorMenu.cs</DependentUpon>
     </Compile>
     <Compile Include="frmLogin.cs">
       <SubType>Form</SubType>
@@ -113,6 +125,12 @@
     <Compile Include="frmPacienteMain.Designer.cs">
       <DependentUpon>frmPacienteMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmPacienteMenu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmPacienteMenu.Designer.cs">
+      <DependentUpon>frmPacienteMenu.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmTipoRol.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -127,11 +145,17 @@
     <Compile Include="frmRegistro.Designer.cs">
       <DependentUpon>frmRegistro.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="copia.resx">
+      <DependentUpon>copia.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmDoctor.resx">
       <DependentUpon>frmDoctor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmDoctorMain.resx">
       <DependentUpon>frmDoctorMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDoctorMenu.resx">
+      <DependentUpon>frmDoctorMenu.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmLogin.resx">
       <DependentUpon>frmLogin.cs</DependentUpon>
@@ -141,6 +165,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmPacienteMain.resx">
       <DependentUpon>frmPacienteMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmPacienteMenu.resx">
+      <DependentUpon>frmPacienteMenu.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmTipoRol.resx">
       <DependentUpon>frmTipoRol.cs</DependentUpon>
@@ -196,6 +223,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\menu.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\calendario.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\busqueda.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\usuario.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\fuerza.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\salida.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\informacion.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

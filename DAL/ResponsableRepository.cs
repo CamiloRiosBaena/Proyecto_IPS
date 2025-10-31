@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class ResponsableRepository : BaseDALRepository<Responsable>
+    public class ResponsableRepository : BaseConsultaRepository<Responsable>, IPLSQLRepository<Responsable>
     {
         protected override string NombreTabla
         {
@@ -53,51 +53,140 @@ namespace DAL
             };
         }
 
-        protected override string ObtenerQueryInsert()
-        {
-            return $@"INSERT INTO {NombreTabla} (documentoid, primer_nombre, segundo_nombre, 
-                            primer_apellido, segundo_apellido, parentesco, telefono, correo, direccion, 
-                            barrio, calle, ciudad_id, ocupacion) VALUES (:documentoid, :primer_nombre, :segundo_nombre, 
-                            :primer_apellido, :segundo_apellido, :parentesco, :telefono, :correo, :direccion, :barrio, 
-                            :calle, :ciudad_id, :ocupacion)";
-        }
-
-        protected override void AgregarParametrosInsert(OracleCommand cmd, Responsable responsable)
-        {
-            cmd.Parameters.Add("documentoid", OracleDbType.Varchar2).Value = responsable.DocumentoID;
-            cmd.Parameters.Add("primer_nombre", OracleDbType.Varchar2).Value = responsable.Primer_Nombre;
-            cmd.Parameters.Add("segundo_nombre", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Nombre ?? DBNull.Value;
-            cmd.Parameters.Add("primer_apellido", OracleDbType.Varchar2).Value = responsable.Primer_Apellido;
-            cmd.Parameters.Add("segundo_apellido", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Apellido ?? DBNull.Value;
-            cmd.Parameters.Add("parentesco", OracleDbType.Varchar2).Value = responsable.Parentesco;
-            cmd.Parameters.Add("telefono", OracleDbType.Varchar2).Value = responsable.Telefono;
-            cmd.Parameters.Add("correo", OracleDbType.Varchar2).Value = responsable.Correo;
-            cmd.Parameters.Add("direccion", OracleDbType.Varchar2).Value = responsable.Direccion;
-            cmd.Parameters.Add("barrio", OracleDbType.Varchar2).Value = responsable.Barrio;
-            cmd.Parameters.Add("calle", OracleDbType.Varchar2).Value = responsable.Calle;
-            cmd.Parameters.Add("ciudad_id", OracleDbType.Int32).Value = responsable.Ciudad_id;
-            cmd.Parameters.Add("ocupacion", OracleDbType.Varchar2).Value = responsable.Ocupacion;
-        }
-
-        protected override string ObtenerQueryUpdate()
-        {
-            return $@"UPDATE {NombreTabla}
-                     SET primer_nombre = :pnombre, segundo_nombre = :snombre,
-                         primer_apellido = :papellido, segundo_apellido = :sapellido,
-                         parentesco = :parentesco, telefono = :tel, correo = :correo,
-                         direccion = :dir, barrio = :barrio, calle = :calle,
-                         ciudad_id = :ciudad, ocupacion = :ocupacion
-                     WHERE documentoid = :id";
-        }
-
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, Responsable r)
-        {
-            AgregarParametrosInsert(cmd, r);
-        }
-
         protected override object ObtenerValorId(Responsable r)
         {
             return r.DocumentoID;
+        }
+
+        public bool Insertar(Responsable responsable)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_INSERTAR_RESPONSABLE", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_documento", OracleDbType.Varchar2).Value = responsable.DocumentoID;
+                        cmd.Parameters.Add("p_primer_nombre", OracleDbType.Varchar2).Value = responsable.Primer_Nombre;
+                        cmd.Parameters.Add("p_segundo_nombre", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Nombre ?? DBNull.Value;
+                        cmd.Parameters.Add("p_primer_apellido", OracleDbType.Varchar2).Value = responsable.Primer_Apellido;
+                        cmd.Parameters.Add("p_segundo_apellido", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Apellido ?? DBNull.Value;
+                        cmd.Parameters.Add("p_telefono", OracleDbType.Varchar2).Value = responsable.Telefono;
+                        cmd.Parameters.Add("p_correo", OracleDbType.Varchar2).Value = responsable.Correo;
+                        cmd.Parameters.Add("p_parentesco", OracleDbType.Varchar2).Value = responsable.Parentesco;
+                        cmd.Parameters.Add("p_direccion", OracleDbType.Varchar2).Value = responsable.Direccion;
+                        cmd.Parameters.Add("p_barrio", OracleDbType.Varchar2).Value = responsable.Barrio;
+                        cmd.Parameters.Add("p_calle", OracleDbType.Varchar2).Value = responsable.Calle;
+                        cmd.Parameters.Add("p_ciudad_id", OracleDbType.Int32).Value = responsable.Ciudad_id;
+                        cmd.Parameters.Add("p_ocupacion", OracleDbType.Varchar2).Value = responsable.Ocupacion;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar responsable: " + ex.Message);
+            }
+        }
+
+        public bool Actualizar(Responsable responsable)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ACTUALIZAR_RESPONSABLE", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_documento", OracleDbType.Varchar2).Value = responsable.DocumentoID;
+                        cmd.Parameters.Add("p_primer_nombre", OracleDbType.Varchar2).Value = responsable.Primer_Nombre;
+                        cmd.Parameters.Add("p_segundo_nombre", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Nombre ?? DBNull.Value;
+                        cmd.Parameters.Add("p_primer_apellido", OracleDbType.Varchar2).Value = responsable.Primer_Apellido;
+                        cmd.Parameters.Add("p_segundo_apellido", OracleDbType.Varchar2).Value = (object)responsable.Segundo_Apellido ?? DBNull.Value;
+                        cmd.Parameters.Add("p_telefono", OracleDbType.Varchar2).Value = responsable.Telefono;
+                        cmd.Parameters.Add("p_correo", OracleDbType.Varchar2).Value = responsable.Correo;
+                        cmd.Parameters.Add("p_parentesco", OracleDbType.Varchar2).Value = responsable.Parentesco;
+                        cmd.Parameters.Add("p_direccion", OracleDbType.Varchar2).Value = responsable.Direccion;
+                        cmd.Parameters.Add("p_barrio", OracleDbType.Varchar2).Value = responsable.Barrio;
+                        cmd.Parameters.Add("p_calle", OracleDbType.Varchar2).Value = responsable.Calle;
+                        cmd.Parameters.Add("p_ciudad_id", OracleDbType.Int32).Value = responsable.Ciudad_id;
+                        cmd.Parameters.Add("p_ocupacion", OracleDbType.Varchar2).Value = responsable.Ocupacion;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar responsable: " + ex.Message);
+            }
+        }
+
+        public bool Eliminar(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ELIMINAR_GENERICO", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo_id", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor_id", OracleDbType.Varchar2).Value = id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar responsable: " + ex.Message);
+            }
+        }
+
+        public bool Existe(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_GENERICO(:p_tabla, :p_campo, :p_valor) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor", OracleDbType.Varchar2).Value = id;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar existencia: " + ex.Message);
+            }
         }
     }
 }

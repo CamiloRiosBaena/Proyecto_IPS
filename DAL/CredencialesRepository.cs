@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class CredencialesRepository : BaseDALRepository<Credenciales>
+    public class CredencialesRepository : BaseConsultaRepository<Credenciales>, IPLSQLRepository<Credenciales>
     {
         protected override string NombreTabla
         {
@@ -23,7 +23,7 @@ namespace DAL
             get { return "usuario_id"; }
         }
 
-        protected override string Primer_Nombre   
+        protected override string Primer_Nombre
         {
             get { return "nombre_usuario"; }
         }
@@ -32,7 +32,7 @@ namespace DAL
         {
             string usuario = reader["nombre_usuario"].ToString();
             string tipo = reader["tipo_usuario"].ToString();
-            return usuario + " (" + tipo + ")";
+            return $"{usuario} ({tipo})";
         }
 
         protected override Credenciales MapearDesdeReader(OracleDataReader reader)
@@ -47,185 +47,264 @@ namespace DAL
             };
         }
 
-        protected override string ObtenerQueryInsert()
-        {
-            return $@"INSERT INTO {NombreTabla} (usuario_id, nombre_usuario, password, tipo_usuario) 
-                        VALUES (:id, :username, :password, :rol)";
-        }
-
-        protected override void AgregarParametrosInsert(OracleCommand cmd, Credenciales credenciales)
-        {
-            cmd.Parameters.Add("id", OracleDbType.Int32).Value = credenciales.Id;
-            cmd.Parameters.Add("username", OracleDbType.Varchar2).Value = credenciales.Nombre_usuario;
-            cmd.Parameters.Add("password", OracleDbType.Varchar2).Value = credenciales.Password;
-            cmd.Parameters.Add("tipo_usuario", OracleDbType.Varchar2).Value = credenciales.Tipo_usuario;
-        }
-
-        protected override string ObtenerQueryUpdate()
-        {
-            return $@"UPDATE {NombreTabla}
-                     SET nombre_usuario = :username, password = :password, 
-                     tipo_usuario = :tipo, estado = :estado
-                     WHERE usuario_id = :id";
-        }
-
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, Credenciales credenciales)
-        {
-            AgregarParametrosInsert(cmd, credenciales);
-        }
-
         protected override object ObtenerValorId(Credenciales credenciales)
         {
             return credenciales.Id;
         }
+
+        public bool Insertar(Credenciales credenciales)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_INSERTAR_CREDENCIALES", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_usuario_id", OracleDbType.Int32).Value = credenciales.Id;
+                        cmd.Parameters.Add("p_nombre_usuario", OracleDbType.Varchar2).Value = credenciales.Nombre_usuario;
+                        cmd.Parameters.Add("p_password", OracleDbType.Varchar2).Value = credenciales.Password;
+                        cmd.Parameters.Add("p_tipo_usuario", OracleDbType.Varchar2).Value = credenciales.Tipo_usuario;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar credenciales: " + ex.Message);
+            }
+        }
+
+        public bool Actualizar(Credenciales credenciales)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ACTUALIZAR_CREDENCIALES", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_usuario_id", OracleDbType.Int32).Value = credenciales.Id;
+                        cmd.Parameters.Add("p_nombre_usuario", OracleDbType.Varchar2).Value = credenciales.Nombre_usuario;
+                        cmd.Parameters.Add("p_password", OracleDbType.Varchar2).Value = credenciales.Password;
+                        cmd.Parameters.Add("p_tipo_usuario", OracleDbType.Varchar2).Value = credenciales.Tipo_usuario;
+                        cmd.Parameters.Add("p_estado", OracleDbType.Varchar2).Value = (object)credenciales.Estado ?? DBNull.Value;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar credenciales: " + ex.Message);
+            }
+        }
+
+        public bool Eliminar(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ELIMINAR_GENERICO", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo_id", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor_id", OracleDbType.Varchar2).Value = id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar credenciales: " + ex.Message);
+            }
+        }
+
+        public bool Existe(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_GENERICO(:p_tabla, :p_campo, :p_valor) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor", OracleDbType.Varchar2).Value = id;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar existencia: " + ex.Message);
+            }
+        }
+
         public bool VerificarCredenciales(string username, string password)
         {
             try
             {
-                using (OracleConnection connection = conexionOracle.ObtenerConexion())
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $@"SELECT COUNT(*) 
-                                   FROM {NombreTabla} 
-                                   WHERE nombre_usuario = :username 
-                                   AND password = :password
-                                   AND estado = 'Activo'";
-
-                    using (OracleCommand command = new OracleCommand(query, connection))
+                    string query = "SELECT FN_VERIFICAR_CREDENCIALES(:p_username, :p_password) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
-                        command.Parameters.Add("username", OracleDbType.Varchar2).Value = username;
-                        command.Parameters.Add("password", OracleDbType.Varchar2).Value = HashPassword(password);
+                        cmd.Parameters.Add("p_username", OracleDbType.Varchar2).Value = username;
+                        cmd.Parameters.Add("p_password", OracleDbType.Varchar2).Value = HashPassword(password);
 
-                        int count = Convert.ToInt32(command.ExecuteScalar());
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
                         return count > 0;
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al verificar credenciales: {ex.Message}");
+                throw new Exception("Error al verificar credenciales: " + ex.Message);
             }
         }
+
         public bool ExisteUsuario(string username)
         {
             try
             {
-                using (OracleConnection connection = conexionOracle.ObtenerConexion())
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT COUNT(*) FROM {NombreTabla} WHERE nombre_usuario = :username";
-
-                    using (OracleCommand command = new OracleCommand(query, connection))
+                    string query = "SELECT FN_EXISTE_USUARIO(:p_username) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
-                        command.Parameters.Add("username", OracleDbType.Varchar2).Value = username;
-                        int count = Convert.ToInt32(command.ExecuteScalar());
+                        cmd.Parameters.Add("p_username", OracleDbType.Varchar2).Value = username;
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
                         return count > 0;
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al verificar usuario: {ex.Message}", ex);
+                throw new Exception("Error al verificar usuario: " + ex.Message);
             }
         }
+
         public int ObtenerSiguienteId()
         {
             try
             {
-                using (OracleConnection connection = conexionOracle.ObtenerConexion())
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    if (connection.State != ConnectionState.Open)
-                    {
-                        connection.Open();
-                    }
-
                     string query = $"SELECT COALESCE(MAX(usuario_id), 0) + 1 FROM {NombreTabla}";
-
-                    using (var command = new OracleCommand(query, connection))
+                    using (var cmd = new OracleCommand(query, conn))
                     {
-                        return Convert.ToInt32(command.ExecuteScalar());
+                        return Convert.ToInt32(cmd.ExecuteScalar());
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error DAL al obtener siguiente ID: {ex.Message}", ex);
+                throw new Exception("Error al obtener siguiente ID: " + ex.Message);
             }
         }
+
         public string ObtenerTipoUsuario(string username)
         {
             try
             {
-                using (OracleConnection connection = conexionOracle.ObtenerConexion())
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT tipo_usuario FROM {NombreTabla} WHERE nombre_usuario = :username";
-
-                    using (OracleCommand command = new OracleCommand(query, connection))
+                    string query = "SELECT FN_OBTENER_TIPO_USUARIO(:p_username) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
-                        command.Parameters.Add("username", OracleDbType.Varchar2).Value = username;
-                        object result = command.ExecuteScalar();
+                        cmd.Parameters.Add("p_username", OracleDbType.Varchar2).Value = username;
+                        object result = cmd.ExecuteScalar();
                         return result?.ToString() ?? string.Empty;
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al obtener tipo de usuario: {ex.Message}", ex);
+                throw new Exception("Error al obtener tipo de usuario: " + ex.Message);
             }
         }
+
         public Credenciales ObtenerPorNombreUsuario(string username)
         {
-            Credenciales credencial = null;
-
             try
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
                     string query = $"SELECT * FROM {NombreTabla} WHERE nombre_usuario = :username";
-
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
                         cmd.Parameters.Add(new OracleParameter("username", username));
-
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
-                                credencial = MapearDesdeReader(reader);
+                                return MapearDesdeReader(reader);
                             }
                         }
                     }
                 }
+                return null;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al obtener credenciales: {ex.Message}");
+                throw new Exception("Error al obtener credenciales: " + ex.Message);
             }
-
-            return credencial;
         }
+
         public bool CambiarEstado(string username, string nuevoEstado)
         {
             try
             {
-                using (OracleConnection connection = conexionOracle.ObtenerConexion())
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $@"UPDATE {NombreTabla} 
-                                   SET estado = :estado 
-                                   WHERE nombre_usuario = :username";
-
-                    using (OracleCommand command = new OracleCommand(query, connection))
+                    using (OracleCommand cmd = new OracleCommand("SP_CAMBIAR_ESTADO_USUARIO", conn))
                     {
-                        command.Parameters.Add("estado", OracleDbType.Varchar2).Value = nuevoEstado;
-                        command.Parameters.Add("username", OracleDbType.Varchar2).Value = username;
-                        int filasAfectadas = command.ExecuteNonQuery();
-                        return filasAfectadas > 0;
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_username", OracleDbType.Varchar2).Value = username;
+                        cmd.Parameters.Add("p_estado", OracleDbType.Varchar2).Value = nuevoEstado;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al cambiar estado: {ex.Message}");
+                throw new Exception("Error al cambiar estado: " + ex.Message);
             }
         }
+
         public bool CambiarPassword(string username, string passwordActual, string passwordNueva)
         {
             try
@@ -235,26 +314,30 @@ namespace DAL
                     throw new Exception("La contraseña actual es incorrecta");
                 }
 
-                using (OracleConnection connection = conexionOracle.ObtenerConexion())
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $@"UPDATE {NombreTabla} 
-                                   SET password = :nuevaPass 
-                                   WHERE nombre_usuario = :username";
-
-                    using (OracleCommand command = new OracleCommand(query, connection))
+                    using (OracleCommand cmd = new OracleCommand("SP_CAMBIAR_PASSWORD", conn))
                     {
-                        command.Parameters.Add("nuevaPass", OracleDbType.Varchar2).Value = HashPassword(passwordNueva);
-                        command.Parameters.Add("username", OracleDbType.Varchar2).Value = username;
-                        int filasAfectadas = command.ExecuteNonQuery();
-                        return filasAfectadas > 0;
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_username", OracleDbType.Varchar2).Value = username;
+                        cmd.Parameters.Add("p_nueva_password", OracleDbType.Varchar2).Value = HashPassword(passwordNueva);
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al cambiar contraseña: {ex.Message}");
+                throw new Exception("Error al cambiar contraseña: " + ex.Message);
             }
         }
+
         public bool InsertarConHash(Credenciales credencial, string passwordSinHash)
         {
             try
@@ -277,9 +360,10 @@ namespace DAL
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error al insertar credenciales: {ex.Message}");
+                throw new Exception("Error al insertar credenciales: " + ex.Message);
             }
         }
+
         private string HashPassword(string password)
         {
             using (var sha256 = SHA256.Create())

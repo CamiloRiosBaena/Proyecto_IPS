@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DAL
 {
-    public class CitaRepository : BaseDALRepository<Cita>
+    public class CitaRepository : BaseConsultaRepository<Cita>, IPLSQLRepository<Cita>
     {
         protected override string NombreTabla
         {
@@ -40,61 +40,128 @@ namespace DAL
             };
         }
 
-        protected override string ObtenerQueryInsert()
-        {
-            return $@"INSERT INTO {NombreTabla} 
-                    (cita_id, paciente_documentoid, doctor_documentoid, fecha, hora, 
-                     especialidad_id, estado)
-                    VALUES 
-                    (:cita_id, :paciente_documentoid, :doctor_documentoid, TO_DATE(:fecha, 'DD/MM/YYYY'), :hora, 
-                     :especialidad_id, :estado)";
-        }
-
-        protected override string ObtenerQueryUpdate()
-        {
-            return $@"UPDATE {NombreTabla} 
-                    SET paciente_documentoid = :paciente_documentoid,
-                    doctor_documentoid = :doctor_documentoid,
-                    fecha = TO_DATE(:fecha, 'DD/MM/YYYY'),
-                    hora = :hora,
-                    especialidad_id = :especialidad_id,
-                    estado = :estado,
-                    WHERE cita_id = :cita_id";
-        }
-
-        protected override void AgregarParametrosInsert(OracleCommand cmd, Cita c)
-        {
-            cmd.Parameters.Add("cita_id", OracleDbType.Int32).Value =  c.Id;
-            cmd.Parameters.Add("paciente_documentoid", OracleDbType.Varchar2).Value = c.Documento_paciente;
-            cmd.Parameters.Add("doctor_documentoid", OracleDbType.Varchar2).Value = c.Documento_doctor;
-
-            DateTime Fecha = new DateTime(c.Fecha.Year, c.Fecha.Month, c.Fecha.Day);
-            cmd.Parameters.Add("fecha", OracleDbType.Date).Value = Fecha;
-
-            cmd.Parameters.Add("hora", OracleDbType.Varchar2).Value = c.Hora;
-            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = c.Especialidad_id;
-            cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = c.Estado;
-        }
-
-        protected override void AgregarParametrosUpdate(OracleCommand cmd, Cita c)
-        {
-            cmd.Parameters.Add("cita_id", OracleDbType.Int32).Value = c.Id;
-            cmd.Parameters.Add("paciente_documentoid", OracleDbType.Varchar2).Value = c.Documento_paciente;
-            cmd.Parameters.Add("doctor_documentoid", OracleDbType.Varchar2).Value = c.Documento_doctor;
-            cmd.Parameters.Add("fecha", OracleDbType.Date).Value = c.Fecha.ToString("dd/MM/yyyy");
-            cmd.Parameters.Add("hora", OracleDbType.Varchar2).Value = c.Hora;
-            cmd.Parameters.Add("especialidad_id", OracleDbType.Int32).Value = c.Especialidad_id;
-            cmd.Parameters.Add("estado", OracleDbType.Varchar2).Value = c.Estado;
-        }
-
-        protected override object ObtenerValorId(Cita c)
-        {
-            return c.Id;
-        }
-
         protected override string ObtenerTextoMostrar(OracleDataReader reader)
         {
             return $"Cita #{reader["cita_id"]} - {Convert.ToDateTime(reader["fecha"]):dd/MM/yyyy}";
+        }
+
+        public bool Insertar(Cita c)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_INSERTAR_CITA", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_cita_id", OracleDbType.Int32).Value = c.Id;
+                        cmd.Parameters.Add("p_paciente_doc", OracleDbType.Varchar2).Value = c.Documento_paciente;
+                        cmd.Parameters.Add("p_doctor_doc", OracleDbType.Varchar2).Value = c.Documento_doctor;
+                        cmd.Parameters.Add("p_fecha", OracleDbType.Date).Value = c.Fecha;
+                        cmd.Parameters.Add("p_hora", OracleDbType.Varchar2).Value = c.Hora;
+                        cmd.Parameters.Add("p_estado", OracleDbType.Varchar2).Value = c.Estado;
+                        cmd.Parameters.Add("p_especialidad_id", OracleDbType.Int32).Value = c.Especialidad_id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al insertar cita: " + ex.Message);
+            }
+        }
+
+        public bool Actualizar(Cita c)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ACTUALIZAR_CITA", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_cita_id", OracleDbType.Int32).Value = c.Id;
+                        cmd.Parameters.Add("p_paciente_doc", OracleDbType.Varchar2).Value = c.Documento_paciente;
+                        cmd.Parameters.Add("p_doctor_doc", OracleDbType.Varchar2).Value = c.Documento_doctor;
+                        cmd.Parameters.Add("p_fecha", OracleDbType.Date).Value = c.Fecha;
+                        cmd.Parameters.Add("p_hora", OracleDbType.Varchar2).Value = c.Hora;
+                        cmd.Parameters.Add("p_especialidad_id", OracleDbType.Int32).Value = c.Especialidad_id;
+                        cmd.Parameters.Add("p_estado", OracleDbType.Varchar2).Value = c.Estado;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al actualizar cita: " + ex.Message);
+            }
+        }
+
+        public bool Eliminar(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_ELIMINAR_GENERICO", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo_id", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor_id", OracleDbType.Varchar2).Value = id;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar cita: " + ex.Message);
+            }
+        }
+
+        public bool Existe(string id)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_GENERICO(:p_tabla, :p_campo, :p_valor) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_tabla", OracleDbType.Varchar2).Value = NombreTabla;
+                        cmd.Parameters.Add("p_campo", OracleDbType.Varchar2).Value = Id;
+                        cmd.Parameters.Add("p_valor", OracleDbType.Varchar2).Value = id;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar existencia: " + ex.Message);
+            }
         }
 
         public int ObtenerSiguienteId()
@@ -103,17 +170,68 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = "SELECT NVL(MAX(cita_id), 0) + 1 FROM s_citas";
+                    string query = "SELECT FN_SIGUIENTE_ID_CITA() FROM DUAL";
                     using (OracleCommand cmd = new OracleCommand(query, conn))
                     {
-                        object result = cmd.ExecuteScalar();
-                        return Convert.ToInt32(result);
+                        return Convert.ToInt32(cmd.ExecuteScalar());
                     }
                 }
             }
             catch (Exception ex)
             {
                 throw new Exception("Error al obtener siguiente ID: " + ex.Message);
+            }
+        }
+
+        public bool ExisteCitaEnHorario(string doctorDocumento, DateTime fecha, string hora)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    string query = "SELECT FN_EXISTE_CITA_HORARIO(:p_doctor_doc, :p_fecha, :p_hora) FROM DUAL";
+                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("p_doctor_doc", OracleDbType.Varchar2).Value = doctorDocumento;
+                        cmd.Parameters.Add("p_fecha", OracleDbType.Date).Value = fecha;
+                        cmd.Parameters.Add("p_hora", OracleDbType.Varchar2).Value = hora;
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al verificar disponibilidad: " + ex.Message);
+            }
+        }
+
+        public bool CambiarEstado(int idCita, string nuevoEstado)
+        {
+            try
+            {
+                using (OracleConnection conn = conexionOracle.ObtenerConexion())
+                {
+                    using (OracleCommand cmd = new OracleCommand("SP_CAMBIAR_ESTADO_CITA", conn))
+                    {
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_cita_id", OracleDbType.Int32).Value = idCita;
+                        cmd.Parameters.Add("p_estado", OracleDbType.Varchar2).Value = nuevoEstado;
+
+                        OracleParameter resultParam = new OracleParameter("p_resultado", OracleDbType.Int32);
+                        resultParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(resultParam);
+
+                        cmd.ExecuteNonQuery();
+                        return Convert.ToInt32(resultParam.Value.ToString()) == 1;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al cambiar estado de cita: " + ex.Message);
             }
         }
 
@@ -124,10 +242,16 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} WHERE paciente_documentoid = :doc ORDER BY fecha DESC, hora DESC";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_CITAS_PACIENTE", conn))
                     {
-                        cmd.Parameters.Add("doc", OracleDbType.Varchar2).Value = documentoPaciente;
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_paciente_doc", OracleDbType.Varchar2).Value = documentoPaciente;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -152,10 +276,16 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} WHERE doctor_documentoid = :doc ORDER BY fecha DESC, hora DESC";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_CITAS_DOCTOR", conn))
                     {
-                        cmd.Parameters.Add("doc", OracleDbType.Varchar2).Value = documentoDoctor;
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_doctor_doc", OracleDbType.Varchar2).Value = documentoDoctor;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -180,10 +310,16 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} WHERE TRUNC(fecha) = TRUNC(:fecha) ORDER BY hora";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_CITAS_FECHA", conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("fecha", fecha));
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_fecha", OracleDbType.Date).Value = fecha;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -208,10 +344,16 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $"SELECT * FROM {NombreTabla} WHERE estado = :estado ORDER BY fecha DESC, hora DESC";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_CITAS_ESTADO", conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("estado", estado));
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_estado", OracleDbType.Varchar2).Value = estado;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -229,57 +371,6 @@ namespace DAL
             return lista;
         }
 
-        public bool ExisteCitaEnHorario(string doctorDocumento, DateTime fecha, string hora)
-        {
-            try
-            {
-                using (OracleConnection conn = conexionOracle.ObtenerConexion())
-                {
-                    string query = $@"SELECT COUNT(*) FROM {NombreTabla} 
-                                    WHERE doctor_documentoid = :doc 
-                                    AND TRUNC(fecha) = TRUNC(:fecha) 
-                                    AND hora = :hora
-                                    AND estado != 'Cancelada'";
-
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
-                    {
-                        cmd.Parameters.Add(new OracleParameter("doc", doctorDocumento));
-                        cmd.Parameters.Add(new OracleParameter("fecha", fecha));
-                        cmd.Parameters.Add(new OracleParameter("hora", hora));
-
-                        int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        return count > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al verificar disponibilidad: " + ex.Message);
-            }
-        }
-
-        public bool CambiarEstado(int idCita, string nuevoEstado)
-        {
-            try
-            {
-                using (OracleConnection conn = conexionOracle.ObtenerConexion())
-                {
-                    string query = $"UPDATE {NombreTabla} SET estado = :estado WHERE cita_id = :id";
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
-                    {
-                        cmd.Parameters.Add(new OracleParameter("estado", nuevoEstado));
-                        cmd.Parameters.Add(new OracleParameter("cita_id", idCita));
-
-                        return cmd.ExecuteNonQuery() > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al cambiar estado de cita: " + ex.Message);
-            }
-        }
-
         public List<Cita> ObtenerCitasPendientesPaciente(string documentoPaciente)
         {
             List<Cita> lista = new List<Cita>();
@@ -287,15 +378,16 @@ namespace DAL
             {
                 using (OracleConnection conn = conexionOracle.ObtenerConexion())
                 {
-                    string query = $@"SELECT * FROM {NombreTabla}
-                                    WHERE paciente_documentoid = :doc 
-                                    AND estado = 'Pendiente'
-                                    AND fecha >= TRUNC(SYSDATE)
-                                    ORDER BY fecha, hora";
-
-                    using (OracleCommand cmd = new OracleCommand(query, conn))
+                    using (OracleCommand cmd = new OracleCommand("SP_OBTENER_CITAS_PENDIENTES_PACIENTE", conn))
                     {
-                        cmd.Parameters.Add(new OracleParameter("doc", documentoPaciente));
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                        cmd.Parameters.Add("p_paciente_doc", OracleDbType.Varchar2).Value = documentoPaciente;
+
+                        OracleParameter cursorParam = new OracleParameter("p_cursor", OracleDbType.RefCursor);
+                        cursorParam.Direction = System.Data.ParameterDirection.Output;
+                        cmd.Parameters.Add(cursorParam);
+
                         using (OracleDataReader reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -311,6 +403,11 @@ namespace DAL
                 throw new Exception("Error al obtener citas pendientes: " + ex.Message);
             }
             return lista;
+        }
+
+        protected override object ObtenerValorId(Cita c)
+        {
+            return c.Id;
         }
     }
 }

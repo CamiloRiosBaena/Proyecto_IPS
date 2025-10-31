@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,18 +13,23 @@ using System.Windows.Forms;
 
 namespace PRESENTACION
 {
-    public partial class frmDoctorMain : Form
+    public partial class frmDoctorMenu : Form
     {
+        public frmDoctorMenu()
+        {
+            InitializeComponent();
+        }
         private string DocumentoDoctor;
         private int citaId;
         private HistoriaClinica historia;
         private ServicioCita servicioCita;
-        private ServicioDoctor servicioDoctor;  
+        private ServicioDoctor servicioDoctor;
         private ServicioPaciente servicioPaciente;
         private ServicioEspecialidad servicioEspecialidad;
         private ServicioHistoriaClinica servicioHistoriaClinica;
-        public frmDoctorMain(string Documento)
+        public frmDoctorMenu(string Documento)
         {
+
             InitializeComponent();
             this.DocumentoDoctor = Documento;
             servicioCita = new ServicioCita();
@@ -40,19 +46,19 @@ namespace PRESENTACION
             pnlInfoDoctor.Visible = false;
             pnlHistoriaClinica.Visible = false;
         }
-  
+
         public void cargarLabel()
         {
             Doctor d = servicioDoctor.ObtenerPorId(DocumentoDoctor);
             Especialidad e = servicioEspecialidad.ObtenerPorId(d.Especialidad_id.ToString());
 
-            lblNombre.Text = d.Primer_Nombre + " " + d.Segundo_Nombre + " " + d.Primer_Apellido + " " + d.Segundo_Apellido;
-            lblCorreo.Text = d.Correo;
-            lblTelefono.Text = d.Telefono;
-            lblCedula.Text = d.DocumentoID;
-            lblLicencia.Text = d.NumeroLicencia;
-            lblEspecialidad.Text = e.Nombre;
-            lblEstado.Text = d.Estado;
+            txbNombreDoctor.Text = d.Primer_Nombre + " " + d.Segundo_Nombre + " " + d.Primer_Apellido + " " + d.Segundo_Apellido;
+            txbCorreoDoctor.Text = d.Correo;
+            txbTelefonoDoctor.Text = d.Telefono;
+            txbCedulaDoctor.Text = d.DocumentoID;
+            txbLicenciaDoctor.Text = d.NumeroLicencia;
+            txbEspecialidadDoctor.Text = e.Nombre;
+            txbEstadoDoctor.Text = d.Estado;
         }
 
         private void CargarCitasConNombres()
@@ -182,7 +188,7 @@ namespace PRESENTACION
             }
         }
 
-        private void btnCitas_Click(object sender, EventArgs e)
+        private void btnCitasDoctor_Click(object sender, EventArgs e)
         {
             pnlCitasDoctor.Visible = true;
             pnlInfoDoctor.Visible = false;
@@ -190,56 +196,6 @@ namespace PRESENTACION
             CargarCitasConNombres();
         }
 
-        private void btnCancelar_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (dgvCitas.SelectedRows.Count == 0)
-                {
-                    MessageBox.Show("Debe seleccionar una cita", "Advertencia",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                int idCita = Convert.ToInt32(dgvCitas.SelectedRows[0].Cells["ID"].Value);
-                string estado = dgvCitas.SelectedRows[0].Cells["Estado"].Value.ToString();
-
-                if (estado == "Cancelada")
-                {
-                    MessageBox.Show("La cita ya está cancelada", "Información",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                if (estado == "Completada")
-                {
-                    MessageBox.Show("No se puede cancelar una cita completada", "Advertencia",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                DialogResult result = MessageBox.Show(
-                    "¿Está seguro de cancelar esta cita?",
-                    "Confirmar cancelación",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
-                {
-                    if (servicioCita.CancelarCita(idCita))
-                    {
-                        MessageBox.Show("Cita cancelada exitosamente", "Éxito",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        CargarCitasConNombres();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al cancelar cita: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
         private void CargarHistoriaClinica()
         {
             try
@@ -248,9 +204,9 @@ namespace PRESENTACION
                 Paciente paciente = servicioPaciente.ObtenerPorId(cita.Documento_paciente);
                 Doctor doctor = servicioDoctor.ObtenerPorId(DocumentoDoctor);
 
-                lblPaciente.Text = $"{paciente.Primer_Nombre} {paciente.Primer_Apellido}";
-                lblCitaId.Text = citaId.ToString();
-                lblFechaApertura.Text = cita.Fecha.ToString("dd/MM/yyyy");
+                txbPacienteDoctor.Text = $"{paciente.Primer_Nombre} {paciente.Primer_Apellido}";
+                txbCitaIdDoctor.Text = citaId.ToString();
+                txbFechaApertura.Text = cita.Fecha.ToString("dd/MM/yyyy");
 
                 CargarHistoriasAnteriores(cita.Documento_paciente, doctor.Especialidad_id);
 
@@ -275,36 +231,7 @@ namespace PRESENTACION
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private void dgvCitas_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
 
-            try
-            {
-                DataGridViewRow row = dgvCitas.Rows[e.RowIndex];
-
-                citaId = Convert.ToInt32(row.Cells["ID"].Value);
-                string estado = row.Cells["Estado"].Value?.ToString();
-
-                if (estado != "Pendiente")
-                {
-                    MessageBox.Show("Solo se puede editar la historia clínica de citas en estado 'Pendiente'",
-                        "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                pnlCitasDoctor.Visible = false;
-                pnlInfoDoctor.Visible = false;
-                pnlHistoriaClinica.Visible = true;
-
-                CargarHistoriaClinica();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al abrir historia clínica: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
         private void CargarHistoriasAnteriores(string documentoPaciente, int especialidadId)
         {
             try
@@ -359,7 +286,196 @@ namespace PRESENTACION
             }
         }
 
-        private void btnCompletar_Click(object sender, EventArgs e)
+        private void label18_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btninfiUserDoctor_Click(object sender, EventArgs e)
+        {
+            pnlCitasDoctor.Visible = false;
+            pnlInfoDoctor.Visible = true;
+            pnlHistoriaClinica.Visible = false;
+            cargarLabel();
+        }
+
+        private void btncerrarsesionDoctor_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+            frmLogin login = new frmLogin();
+            login.Show();
+        }
+
+        private void btnsaliruserDoctor_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void btnCitasDoctor_MouseEnter(object sender, EventArgs e)
+        {
+            btnCitasDoctor.BackColor = Color.DarkGreen;
+        }
+        private void btnCitasDoctor_MouseLeave(object sender, EventArgs e)
+        {
+            btnCitasDoctor.BackColor = Color.SeaGreen;
+        }
+
+        private void btnuserDoctor_MouseEnter(object sender, EventArgs e)
+        {
+            btnuserDoctor.BackColor = Color.DarkGreen;
+        }
+
+        private void btnuserDoctor_MouseLeave(object sender, EventArgs e)
+        {
+            btnuserDoctor.BackColor = Color.SeaGreen;
+        }
+
+        private void btninfiUserDoctor_MouseEnter(object sender, EventArgs e)
+        {
+            btninfiUserDoctor.BackColor = Color.DarkGreen;
+        }
+
+        private void btninfiUserDoctor_MouseLeave(object sender, EventArgs e)
+        {
+            btninfiUserDoctor.BackColor = Color.SeaGreen;
+        }
+
+        private void btncerrarsesionDoctor_MouseEnter(object sender, EventArgs e)
+        {
+            btncerrarsesionDoctor.BackColor = Color.DarkGreen;
+        }
+
+        private void btncerrarsesionDoctor_MouseLeave(object sender, EventArgs e)
+        {
+            btncerrarsesionDoctor.BackColor = Color.SeaGreen;
+        }
+
+        private void btnsaliruserDoctor_MouseEnter(object sender, EventArgs e)
+        {
+            btnsaliruserDoctor.BackColor = Color.DarkGreen;
+        }
+
+        private void btnsaliruserDoctor_MouseLeave(object sender, EventArgs e)
+        {
+            btnsaliruserDoctor.BackColor = Color.SeaGreen;
+        }
+
+
+        bool menuExpandDoc = true;
+        bool menuUserDoc = true;
+
+        private void btnuserDoctor_Click(object sender, EventArgs e)
+        {
+            timerOpcionUserDoc.Start();
+
+        }
+
+        private void btnmenuDoctor_Click(object sender, EventArgs e)
+        {
+            timerdocmenu.Start();
+        }
+
+        private void timerdocmenu_Tick(object sender, EventArgs e)
+        {
+            if (menuExpandDoc)
+            {
+                flowLayoutDocMenu.Width -= 5;
+                if (flowLayoutDocMenu.Width <= 56)
+                {
+                    menuExpandDoc = false;
+                    timerdocmenu.Stop();
+                }
+            }
+            else
+            {
+                flowLayoutDocMenu.Width += 5;
+                if (flowLayoutDocMenu.Width >= 192)
+                {
+                    menuExpandDoc = true;
+                    timerdocmenu.Stop();
+                }
+            }
+        }
+
+        private void timerOpcionUserDoc_Tick(object sender, EventArgs e)
+        {
+            if (menuUserDoc)
+            {
+                flowLayoutopcionmenuDoc.Height -= 5;
+                if (flowLayoutopcionmenuDoc.Height <= 49)
+                {
+                    menuUserDoc = false;
+                    timerOpcionUserDoc.Stop();
+                }
+            }
+            else
+            {
+                flowLayoutopcionmenuDoc.Height += 5;
+                if (flowLayoutopcionmenuDoc.Height >= 200)
+                {
+                    menuUserDoc = true;
+                    timerOpcionUserDoc.Stop();
+                }
+            }
+        }
+        private void RedondearBoton(Button boton, int radio)
+        {
+            GraphicsPath path = new GraphicsPath();
+            path.StartFigure();
+
+            path.AddArc(new Rectangle(0, 0, radio, radio), 180, 90);
+            path.AddArc(new Rectangle(boton.Width - radio, 0, radio, radio), 270, 90);
+            path.AddArc(new Rectangle(boton.Width - radio, boton.Height - radio, radio, radio), 0, 90);
+            path.AddArc(new Rectangle(0, boton.Height - radio, radio, radio), 90, 90);
+
+            path.CloseFigure();
+            boton.Region = new Region(path);
+        }
+
+        private void frmDoctorMenu_Load(object sender, EventArgs e)
+        {
+            RedondearBoton(btncloseDoctor, 20);
+            RedondearBoton(btnmax, 20);
+            RedondearBoton(btnmin, 20);
+        }
+
+        private void btncloseDoctor_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void dgvCitas_CellDoubleClick_1(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            try
+            {
+                DataGridViewRow row = dgvCitas.Rows[e.RowIndex];
+
+                citaId = Convert.ToInt32(row.Cells["ID"].Value);
+                string estado = row.Cells["Estado"].Value?.ToString();
+
+                if (estado != "Pendiente")
+                {
+                    MessageBox.Show("Solo se puede editar la historia clínica de citas en estado 'Pendiente'",
+                        "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                pnlCitasDoctor.Visible = false;
+                pnlInfoDoctor.Visible = false;
+                pnlHistoriaClinica.Visible = true;
+
+                CargarHistoriaClinica();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al abrir historia clínica: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnCompletar_Click_1(object sender, EventArgs e)
         {
             try
             {
@@ -438,9 +554,55 @@ namespace PRESENTACION
             }
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
+        private void btnCancelar_Click(object sender, EventArgs e)
         {
+            try
+            {
+                if (dgvCitas.SelectedRows.Count == 0)
+                {
+                    MessageBox.Show("Debe seleccionar una cita", "Advertencia",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
+                int idCita = Convert.ToInt32(dgvCitas.SelectedRows[0].Cells["ID"].Value);
+                string estado = dgvCitas.SelectedRows[0].Cells["Estado"].Value.ToString();
+
+                if (estado == "Cancelada")
+                {
+                    MessageBox.Show("La cita ya está cancelada", "Información",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                if (estado == "Completada")
+                {
+                    MessageBox.Show("No se puede cancelar una cita completada", "Advertencia",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                DialogResult result = MessageBox.Show(
+                    "¿Está seguro de cancelar esta cita?",
+                    "Confirmar cancelación",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    if (servicioCita.CancelarCita(idCita))
+                    {
+                        MessageBox.Show("Cita cancelada exitosamente", "Éxito",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        CargarCitasConNombres();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cancelar cita: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
